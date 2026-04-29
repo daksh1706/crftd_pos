@@ -9,6 +9,9 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+
+// NOTE: Socket.io has limited support on Vercel Serverless.
+// It may connect but will disconnect frequently.
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
@@ -18,13 +21,12 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
-// Pass io to request object to be used in controllers
+
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// Routes will be imported here
 import authRoutes from './routes/authRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
@@ -37,25 +39,29 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 
-// Socket.io for real-time updates
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
-
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
 });
 
-const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pos_system';
+// Database connection logic
+const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((err) => console.error('MongoDB connection error:', err));
+}
+
+// CRITICAL FIX: Export the app for Vercel
+export default app;
+
+// Only listen if running locally
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5001;
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
+}
