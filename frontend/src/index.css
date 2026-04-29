@@ -177,6 +177,37 @@ input::placeholder, textarea::placeholder {
   background: linear-gradient(160deg, rgba(25, 29, 38, 0.9), rgba(15, 17, 23, 0.9));
   border: 1px solid var(--border);
   box-shadow: var(--shadow-glass);
+  height: 100%;
+}
+
+.pos-item-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8rem;
+}
+
+.pos-item-category {
+  font-size: 0.75rem;
+  color: white;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.pos-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1.5rem;
 }
 
 .pos-item-card::after {

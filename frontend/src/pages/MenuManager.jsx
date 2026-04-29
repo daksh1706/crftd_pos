@@ -7,17 +7,20 @@ const MenuManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedDetails, setExpandedDetails] = useState(null); 
   const [editingItem, setEditingItem] = useState(null);
+  const [activeTab, setActiveTab] = useState('Signature');
 
   const initialFormState = {
     name: '',
-    category: 'Mains',
+    category: 'Waffles',
     price: '',
     image: '',
     description: '',
     prepInstructions: '',
     isAvailable: true,
     nutritionalInfo: { calories: '', protein: '', carbs: '', fat: '' },
-    recipe: []
+    recipe: [],
+    isCustomization: false,
+    customizationType: 'None'
   };
   
   const [formData, setFormData] = useState(initialFormState);
@@ -61,9 +64,11 @@ const MenuManager = () => {
         image: item.image || '',
         description: item.description || '',
         prepInstructions: item.prepInstructions || '',
-        isAvailable: item.isAvailable !== false, // default true if undefined
+        isAvailable: item.isAvailable !== false,
         nutritionalInfo: item.nutritionalInfo || { calories: '', protein: '', carbs: '', fat: '' },
-        recipe: item.recipe || []
+        recipe: item.recipe || [],
+        isCustomization: item.isCustomization || false,
+        customizationType: item.customizationType || 'None'
       });
     } else {
       setEditingItem(null);
@@ -168,33 +173,61 @@ const MenuManager = () => {
         </button>
       </div>
 
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+        <button 
+          onClick={() => setActiveTab('Signature')}
+          style={{ background: activeTab === 'Signature' ? 'rgba(245, 158, 11, 0.2)' : 'transparent', color: activeTab === 'Signature' ? '#f59e0b' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+        >
+          Signature Dishes
+        </button>
+        <button 
+          onClick={() => setActiveTab('Customization')}
+          style={{ background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: activeTab === 'Customization' ? '#10b981' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+        >
+          Customization Components
+        </button>
+      </div>
+
       <div className="pos-grid">
-        {menuItems.map(item => (
+        {menuItems.filter(item => activeTab === 'Signature' ? !item.isCustomization : item.isCustomization).map(item => (
           <div key={item._id} className="glass" style={{ borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', opacity: item.isAvailable === false ? 0.6 : 1, filter: item.isAvailable === false ? 'grayscale(0.5)' : 'none' }}>
             
-            {/* Absolute Action Buttons */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
-              <button onClick={() => openModal(item)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Edit2 size={16} />
-              </button>
-              <button onClick={() => deleteItem(item._id)} style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: 'var(--error)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Trash2 size={16} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', marginTop: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Card Header (Image, Title, Price, Actions) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', gap: '1rem' }}>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flex: 1, minWidth: 0 }}>
                 {item.image ? (
-                   <img src={item.image} alt={item.name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
+                   <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
                 ) : (
-                   <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ChefHat size={28} color="var(--text-muted)" /></div>
+                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ChefHat size={24} color="var(--text-muted)" /></div>
                 )}
-                <div>
-                  <h3 style={{ margin: '0 0 0.25rem 0' }}>{item.name} {item.isAvailable === false && <span style={{ color: 'var(--error)', fontSize: '0.8rem' }}>(Unavailable)</span>}</h3>
-                  <span style={{ fontSize: '0.75rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{item.category}</span>
+                
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: '1.05rem', lineHeight: '1.3' }} title={item.name}>
+                      {item.name} {item.isAvailable === false && <span style={{ color: 'var(--error)', fontSize: '0.75rem', marginLeft: '0.25rem' }}>(Out of Stock)</span>}
+                    </h3>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {item.isCustomization ? `${item.customizationType}` : item.category}
+                    </span>
+                    <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.1rem' }}>₹{item.price}</span>
+                  </div>
                 </div>
               </div>
-              <p style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.25rem', margin: 0 }}>₹{item.price}</p>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                <button onClick={() => openModal(item)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }} className="hover-brighten">
+                  <Edit2 size={14} />
+                </button>
+                <button onClick={() => deleteItem(item._id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
             </div>
             
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', flex: 1 }}>
@@ -259,22 +292,49 @@ const MenuManager = () => {
               {/* Row 1 */}
               <div style={{ display: 'flex', gap: '1.5rem' }}>
                 <div style={{ flex: 2 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Dish Name</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>{formData.isCustomization ? 'Component Name' : 'Dish Name'}</label>
                   <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Signature Truffle Pasta" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Price (₹)</label>
                   <input required type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="e.g. 450" />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Category</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option>Starters</option>
-                    <option>Mains</option>
-                    <option>Desserts</option>
-                    <option>Beverages</option>
-                  </select>
-                </div>
+                {formData.isCustomization ? (
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Customization Type</label>
+                    <select value={formData.customizationType} onChange={e => setFormData({...formData, customizationType: e.target.value})}>
+                      <option value="Base">Base</option>
+                      <option value="Flavour">Flavour</option>
+                      <option value="Topping">Topping</option>
+                      <option value="Filling">Filling</option>
+                      <option value="Syrup">Syrup</option>
+                      <option value="None">None</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Category</label>
+                    <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                      <option>Waffles</option>
+                      <option>Pancakes</option>
+                      <option>Coffee</option>
+                      <option>Shakes and Smoothies</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                <input 
+                  type="checkbox" 
+                  id="isCustomization"
+                  checked={formData.isCustomization} 
+                  onChange={e => setFormData({...formData, isCustomization: e.target.checked})} 
+                  style={{ width: 'auto', transform: 'scale(1.2)' }}
+                />
+                <label htmlFor="isCustomization" style={{ cursor: 'pointer', color: 'var(--text-main)', fontWeight: 600 }}>
+                  This item is a Customization Component (e.g., Base, Topping)
+                </label>
               </div>
 
               {/* Status Row */}

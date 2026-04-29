@@ -7,6 +7,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import OrderLedger from './pages/OrderLedger';
 import ActiveOrders from './pages/ActiveOrders';
+import PaymentSuccess from './pages/PaymentSuccess';
 import Sidebar from './components/Sidebar';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/ledger" element={<OrderLedger />} />
             <Route path="/orders" element={<ActiveOrders />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
           </Routes>
         </main>
       </div>

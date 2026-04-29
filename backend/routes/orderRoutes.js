@@ -1,8 +1,12 @@
 import express from 'express';
-import { createOrder, getOrders, updateOrderStatus } from '../controllers/orderController.js';
+import { createOrder, getOrders, updateOrderStatus, createPaymentIntent, createCheckoutSession, confirmStripePayment } from '../controllers/orderController.js';
 import { protect, managerOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+router.post('/create-payment-intent', createPaymentIntent);
+router.post('/create-checkout-session', createCheckoutSession);
+router.post('/confirm-payment', confirmStripePayment);
 
 router.route('/')
   .get(getOrders)

@@ -18,7 +18,15 @@ const orderItemSchema = new mongoose.Schema({
   subtotal: {
     type: Number,
     required: true
-  }
+  },
+  customizations: [{
+    menuItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MenuItem'
+    },
+    name: String,
+    price: Number
+  }]
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
@@ -50,8 +58,16 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash', 'UPI', 'Card'],
+    enum: ['Cash', 'UPI', 'Card', 'Stripe'],
     required: true
+  },
+  cashGiven: {
+    type: Number,
+    default: 0
+  },
+  changeDue: {
+    type: Number,
+    default: 0
   },
   customer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -63,7 +79,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Preparing', 'Ready', 'Completed'],
+    enum: ['Pending Payment', 'Preparing', 'Ready', 'Completed'],
     default: 'Preparing'
   }
 }, { timestamps: true });

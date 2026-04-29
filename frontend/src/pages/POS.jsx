@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
-import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus } from 'lucide-react';
+import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const POS = () => {
   const [menuItems, setMenuItems] = useState([]);
+  const [activeTab, setActiveTab] = useState('Signature');
   const [cart, setCart] = useState([]);
   const [discountPercent, setDiscountPercent] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [paymentMethod, setPaymentMethod] = useState('Stripe');
   
   // Checkout Modals State
   const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -21,6 +23,13 @@ const POS = () => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerLoading, setCustomerLoading] = useState(false);
+
+  // Payment Flow States
+  // Removed upiQRData
+  const [cardAwaiting, setCardAwaiting] = useState(false);
+
+  // Customization State
+  const [selectedCustomizations, setSelectedCustomizations] = useState([]);
 
   useEffect(() => {
     fetchMenu();
@@ -55,19 +64,29 @@ const POS = () => {
 
   const addToCart = (item, e = null) => {
     if (e) e.stopPropagation();
+    const customIds = selectedCustomizations.map(c => c._id).sort().join(',');
+    const cartItemId = item._id + customIds;
+
+    const formattedCustomizations = selectedCustomizations.map(c => ({
+      menuItemId: c._id,
+      name: c.name,
+      price: c.price
+    }));
+
     setCart((prev) => {
-      const existing = prev.find(i => i._id === item._id);
+      const existing = prev.find(i => i.cartItemId === cartItemId);
       if (existing) {
-        return prev.map(i => i._id === item._id ? { ...i, qty: i.qty + 1 } : i);
+        return prev.map(i => i.cartItemId === cartItemId ? { ...i, qty: i.qty + 1 } : i);
       }
-      return [...prev, { ...item, qty: 1 }];
+      return [...prev, { ...item, cartItemId, qty: 1, customizations: formattedCustomizations }];
     });
     setSelectedProduct(null);
+    setSelectedCustomizations([]);
   };
 
-  const updateQty = (id, delta) => {
+  const updateQty = (cartItemId, delta) => {
     setCart(prev => prev.map(i => {
-      if (i._id === id) {
+      if (i.cartItemId === cartItemId) {
         const newQty = Math.max(0, i.qty + delta);
         return { ...i, qty: newQty };
       }
@@ -75,60 +94,99 @@ const POS = () => {
     }).filter(i => i.qty > 0));
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const subtotal = cart.reduce((sum, item) => {
+    const customPrice = item.customizations ? item.customizations.reduce((s, c) => s + c.price, 0) : 0;
+    return sum + ((item.price + customPrice) * item.qty);
+  }, 0);
   const discountVal = Number(discountPercent) || 0;
   const discountAmount = (subtotal * discountVal) / 100;
   const subtotalAfterDiscount = subtotal - discountAmount;
   const gst = subtotalAfterDiscount * 0.05; // 5% GST
   const total = subtotalAfterDiscount + gst;
 
+  const groupedCustomizations = {
+    Flavour: menuItems.filter(i => i.isCustomization && i.customizationType === 'Flavour'),
+    Topping: menuItems.filter(i => i.isCustomization && i.customizationType === 'Topping'),
+    Filling: menuItems.filter(i => i.isCustomization && i.customizationType === 'Filling'),
+    Syrup: menuItems.filter(i => i.isCustomization && i.customizationType === 'Syrup')
+  };
+
   const handleCheckoutInit = () => {
     if (cart.length === 0) return alert('Cart is empty!');
     setShowCustomerModal(true);
   };
 
-  const handleProcessOrder = async (e) => {
+  const handlePaymentInit = async (e) => {
     e.preventDefault();
+    if (paymentMethod === 'Stripe') {
+      handleProcessOrder(true);
+      return;
+    }
+    
+    if (paymentMethod === 'Card' && !cardAwaiting) {
+      setCardAwaiting(true);
+      return;
+    }
+    
+    handleProcessOrder(false);
+  };
+
+  const handleProcessOrder = async (isCheckoutSession = false) => {
     setIsProcessing(true);
 
     try {
       const orderItems = cart.map(item => ({
         menuItemId: item._id,
-        quantity: item.qty
+        quantity: item.qty,
+        customizations: item.customizations || []
       }));
+
+      const changeDueAmt = paymentMethod === 'Cash' && cashGiven ? Number(cashGiven) - total : 0;
 
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           items: orderItems,
           paymentMethod,
           discountAmount,
           customerPhone,
-          customerName
+          customerName,
+          cashGiven: paymentMethod === 'Cash' ? Number(cashGiven) : 0,
+          changeDue: changeDueAmt,
+          isCheckoutSession
         })
       });
 
+      const data = await res.json();
       if (res.ok) {
-        const orderData = await res.json();
-        setCompletedOrder(orderData);
-        setCart([]);
-        setDiscountPercent('');
-        setCustomerName('');
-        setCustomerPhone('');
+        if (isCheckoutSession && data.url) {
+          window.location.href = data.url;
+          return;
+        }
+
+        setCompletedOrder(data);
         setShowCustomerModal(false);
         setShowSuccessModal(true);
+        setCart([]);
+        setCustomerPhone('');
+        setCustomerName('');
+        setCashGiven('');
+        setCardAwaiting(false);
       } else {
-        const err = await res.json();
-        alert('Checkout failed: ' + err.message);
+        alert(data.message || 'Failed to process order');
       }
     } catch (err) {
       console.error(err);
-      alert('Error during checkout');
+      alert('Error processing order');
     } finally {
       setIsProcessing(false);
     }
   };
+
 
   const getReceiptDoc = () => {
     if (!completedOrder) return null;
@@ -194,6 +252,16 @@ const POS = () => {
       const itemName = item.menuItem?.name || 'Item';
       doc.text(`${qtyStr} ${itemName.substring(0, 35)}`, marginLeft, y);
       y += 4;
+      if (item.customizations && item.customizations.length > 0) {
+        doc.setFontSize(7);
+        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const splitText = doc.splitTextToSize(customText, 70);
+        splitText.forEach(line => {
+          doc.text(line, marginLeft, y);
+          y += 3;
+        });
+        doc.setFontSize(8);
+      }
     });
 
     y += 2;
@@ -254,6 +322,17 @@ const POS = () => {
       
       doc.text(`${col1}${col2}${col3}${col4}`, marginLeft, y);
       y += 4;
+
+      if (item.customizations && item.customizations.length > 0) {
+        doc.setFontSize(7);
+        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const splitText = doc.splitTextToSize(customText, 40); // wrap within 40 chars
+        splitText.forEach(line => {
+          doc.text(line, marginLeft, y);
+          y += 3;
+        });
+        doc.setFontSize(8);
+      }
     });
 
     doc.text(singleLine, marginLeft, y);
@@ -282,6 +361,16 @@ const POS = () => {
     doc.text(`TOTAL (Rs.):                     ${padL(totalStr, 8)}`, marginLeft, y);
     doc.setFont('courier', 'normal');
     y += 4;
+
+    if (completedOrder.paymentMethod === 'Cash' && completedOrder.cashGiven) {
+      y += 2;
+      const cashStr = completedOrder.cashGiven.toFixed(2);
+      const changeStr = (completedOrder.changeDue || 0).toFixed(2);
+      doc.text(`Cash Given:                      ${padL(cashStr, 8)}`, marginLeft, y);
+      y += 4;
+      doc.text(`Change Due:                      ${padL(changeStr, 8)}`, marginLeft, y);
+      y += 4;
+    }
 
     doc.text(doubleLine, marginLeft, y);
     y += 6;
@@ -350,11 +439,26 @@ const POS = () => {
           <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Point of Sale</h1>
           <p style={{ color: 'var(--text-muted)' }}>Select an item to view details or add it directly to cart</p>
         </div>
+
+        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+          <button 
+            onClick={() => setActiveTab('Signature')}
+            style={{ background: activeTab === 'Signature' ? 'rgba(245, 158, 11, 0.2)' : 'transparent', color: activeTab === 'Signature' ? '#f59e0b' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+          >
+            Signature Dishes
+          </button>
+          <button 
+            onClick={() => setActiveTab('Customization')}
+            style={{ background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: activeTab === 'Customization' ? '#10b981' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+          >
+            Build Your Own
+          </button>
+        </div>
         
         <div className="pos-grid">
-          {menuItems.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No menu items found. Go to Menu Manager to create some.</p>
-          ) : menuItems.map(item => (
+          {menuItems.filter(item => activeTab === 'Signature' ? !item.isCustomization : (item.isCustomization && item.customizationType === 'Base')).length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>No items found in this category.</p>
+          ) : menuItems.filter(item => activeTab === 'Signature' ? !item.isCustomization : (item.isCustomization && item.customizationType === 'Base')).map(item => (
             <div 
               key={item._id} 
               className="pos-item-card animate-slide-up" 
@@ -362,8 +466,7 @@ const POS = () => {
                 opacity: item.isAvailable === false ? 0.6 : 1, 
                 filter: item.isAvailable === false ? 'grayscale(0.8)' : 'none',
                 pointerEvents: item.isAvailable === false ? 'none' : 'auto',
-                cursor: item.isAvailable === false ? 'not-allowed' : 'default',
-                paddingBottom: '4.5rem'
+                cursor: item.isAvailable === false ? 'not-allowed' : 'default'
               }}
             >
               {item.image ? (
@@ -371,14 +474,20 @@ const POS = () => {
               ) : (
                 <div style={{ width: '100px', height: '100px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><ChefHat size={40} color="var(--text-muted)" /></div>
               )}
-              <h3 style={{ fontSize: '1rem', marginTop: '0.5rem' }}>
+              
+              <span className="pos-item-category">
+                {item.isCustomization ? `Component: ${item.customizationType}` : item.category || 'Dish'}
+              </span>
+
+              <div className="pos-item-name">
                 {item.name} 
                 {item.isAvailable === false && <span style={{display: 'block', color: 'var(--error)', fontSize: '0.8rem', marginTop: '0.2rem'}}>Sold Out</span>}
-              </h3>
+              </div>
+              
               <p className="pos-item-price">₹{item.price}</p>
               
               {item.isAvailable !== false && (
-                <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
+                <div className="pos-item-actions">
                   <button 
                     onClick={() => setSelectedProduct(item)} 
                     className="btn btn-secondary" 
@@ -411,15 +520,20 @@ const POS = () => {
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '2rem' }}>Cart is empty</p>
           ) : (
             cart.map(item => (
-              <div key={item._id} className="cart-item">
+              <div key={item.cartItemId} className="cart-item">
                 <div style={{ flex: 1 }}>
                   <h4 style={{ margin: 0 }}>{item.name}</h4>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>₹{item.price}</p>
+                  {item.customizations && item.customizations.length > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      + {item.customizations.map(c => c.name).join(', ')}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button onClick={() => updateQty(item._id, -1)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer' }}>-</button>
+                  <button onClick={() => updateQty(item.cartItemId, -1)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer' }}>-</button>
                   <span style={{ fontWeight: 600 }}>{item.qty}</span>
-                  <button onClick={() => updateQty(item._id, 1)} style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 10px rgba(245, 158, 11, 0.4)' }}>+</button>
+                  <button onClick={() => updateQty(item.cartItemId, 1)} style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 10px rgba(245, 158, 11, 0.4)' }}>+</button>
                 </div>
                 <div style={{ marginLeft: '1rem', fontWeight: 600, width: '60px', textAlign: 'right' }}>
                   ₹{(item.price * item.qty).toFixed(0)}
@@ -458,7 +572,7 @@ const POS = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            {['Cash', 'UPI', 'Card'].map(method => (
+            {['Cash', 'Stripe', 'Card'].map(method => (
               <button 
                 key={method}
                 onClick={() => setPaymentMethod(method)}
@@ -498,9 +612,11 @@ const POS = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem 0' }}>{selectedProduct.name}</h2>
-                  <span style={{ fontSize: '0.8rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
                 </div>
-                <span style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedProduct.price}</span>
+                <span style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  ₹{(selectedProduct.price + selectedCustomizations.reduce((sum, c) => sum + c.price, 0)).toFixed(2)}
+                </span>
               </div>
               
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '1.5rem' }}>
@@ -508,7 +624,7 @@ const POS = () => {
               </p>
 
               {/* Nutrition Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Calories</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.calories || '-'}</div>
@@ -525,6 +641,36 @@ const POS = () => {
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Fat</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.fat || '-'}g</div>
                 </div>
+              </div>
+
+              {/* Customizations */}
+              <div style={{ marginBottom: '2rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                {Object.entries(groupedCustomizations).map(([category, options]) => options.length > 0 && (
+                  <div key={category} style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'capitalize' }}>{category}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {options.map(opt => {
+                        const isSelected = selectedCustomizations.some(c => c._id === opt._id);
+                        return (
+                          <button
+                            key={opt._id}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedCustomizations(prev => prev.filter(c => c._id !== opt._id));
+                              } else {
+                                setSelectedCustomizations(prev => [...prev, opt]);
+                              }
+                            }}
+                            className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          >
+                            {opt.name} (+₹{opt.price})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <button className="btn btn-primary" style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem' }} onClick={(e) => addToCart(selectedProduct, e)}>
@@ -544,7 +690,7 @@ const POS = () => {
               <button onClick={() => setShowCustomerModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={24} /></button>
             </div>
             
-            <form onSubmit={handleProcessOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form onSubmit={handlePaymentInit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Phone Number (10 digits)</label>
                 <div style={{ position: 'relative' }}>
@@ -576,13 +722,56 @@ const POS = () => {
                 )}
               </div>
 
-              <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+              {paymentMethod === 'Cash' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Cash Given by Customer</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                    <input 
+                      required 
+                      type="number" 
+                      min={total}
+                      step="0.01"
+                      value={cashGiven} 
+                      onChange={e => setCashGiven(e.target.value)} 
+                      placeholder="Enter amount..."
+                      style={{ paddingLeft: '2rem' }}
+                    />
+                  </div>
+                  {Number(cashGiven) > 0 && Number(cashGiven) >= total && (
+                    <p style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '0.5rem' }}>Change Due: ₹{(Number(cashGiven) - total).toFixed(2)}</p>
+                  )}
+                </div>
+              )}
+
+              {paymentMethod === 'Card' && cardAwaiting && (
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                  <CreditCard size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Awaiting Card Swipe</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Please complete the transaction of ₹{total.toFixed(2)} on the card terminal.</p>
+                </div>
+              )}
+
+              {paymentMethod === 'Stripe' && (
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Smartphone size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Stripe Online Checkout</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>You will be redirected to the secure Stripe payment page to complete the transaction of ₹{total.toFixed(2)}.</p>
+                </div>
+              )}
+
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
                  <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total Amount</span>
                     <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent)' }}>₹{total.toFixed(2)}</span>
                  </p>
                  <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1.2rem', fontSize: '1.1rem' }} disabled={isProcessing}>
-                    {isProcessing ? 'Processing Order...' : 'Complete Payment'}
+                    {isProcessing ? 'Processing...' : (
+                      paymentMethod === 'Card' && !cardAwaiting ? 'Initiate Card Payment' :
+                      paymentMethod === 'Card' && cardAwaiting ? 'Confirm Terminal Success' :
+                      paymentMethod === 'Stripe' ? 'Proceed to Stripe Payment' :
+                      'Complete Payment'
+                    )}
                  </button>
               </div>
             </form>

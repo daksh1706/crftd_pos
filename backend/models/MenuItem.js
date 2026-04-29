@@ -48,6 +48,15 @@ const menuItemSchema = new mongoose.Schema({
   isAvailable: {
     type: Boolean,
     default: true
+  },
+  isCustomization: {
+    type: Boolean,
+    default: false
+  },
+  customizationType: {
+    type: String,
+    enum: ['Base', 'Flavour', 'Topping', 'Filling', 'Syrup', 'None'],
+    default: 'None'
   }
 }, { timestamps: true });
 

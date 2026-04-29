@@ -7,6 +7,8 @@ const OrderLedger = () => {
 
   useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 5000); // Polling for updates
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = async () => {
@@ -62,6 +64,7 @@ const OrderLedger = () => {
               <th style={{ padding: '1.25rem' }}>Order No.</th>
               <th style={{ padding: '1.25rem' }}>Customer Details</th>
               <th style={{ padding: '1.25rem' }}>Payment</th>
+              <th style={{ padding: '1.25rem' }}>Status</th>
               <th style={{ padding: '1.25rem', textAlign: 'right' }}>Amount</th>
             </tr>
           </thead>
@@ -100,6 +103,18 @@ const OrderLedger = () => {
                     {order.paymentMethod}
                   </div>
                 </td>
+                <td style={{ padding: '1.25rem' }}>
+                  <span style={{ 
+                    padding: '0.25rem 0.75rem', 
+                    borderRadius: '1rem', 
+                    fontSize: '0.85rem', 
+                    fontWeight: 'bold',
+                    backgroundColor: order.status === 'Completed' ? 'rgba(16, 185, 129, 0.2)' : order.status === 'Ready' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                    color: order.status === 'Completed' ? '#10b981' : order.status === 'Ready' ? '#3b82f6' : '#f59e0b'
+                  }}>
+                    {order.status || 'Preparing'}
+                  </span>
+                </td>
                 <td style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem' }}>
                   ₹{order.totalAmount.toFixed(2)}
                 </td>
@@ -107,7 +122,7 @@ const OrderLedger = () => {
             ))}
             {filteredOrders.length === 0 && (
               <tr>
-                <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No orders found.
                 </td>
               </tr>
