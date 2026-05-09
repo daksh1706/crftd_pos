@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
-import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 const POS = () => {
@@ -118,6 +118,17 @@ const POS = () => {
     Topping: menuItems.filter(i => i.isCustomization && i.customizationType === 'Topping'),
     Filling: menuItems.filter(i => i.isCustomization && i.customizationType === 'Filling'),
     Syrup: menuItems.filter(i => i.isCustomization && i.customizationType === 'Syrup')
+  };
+
+  const PREDEFINED_CATEGORIES = ['Waffles', 'Pancakes', 'Crepes', 'Shakes', 'Beverages', 'Savory'];
+  const dynamicCategories = [...new Set(menuItems.filter(i => !i.isCustomization).map(i => i.category))];
+  const displayCategories = ['All Items', ...new Set([...PREDEFINED_CATEGORIES, ...dynamicCategories])];
+
+  const getCategoryIcon = (catName) => {
+    const name = catName.toLowerCase();
+    if (name.includes('drink') || name.includes('beverage') || name.includes('coffee') || name.includes('shake')) return <Coffee size={24} />;
+    if (name.includes('all items')) return <ChefHat size={24} />;
+    return <Utensils size={24} />;
   };
 
   const handleCheckoutInit = () => {
@@ -392,10 +403,18 @@ const POS = () => {
     return doc;
   };
 
-  const printReceipt = () => {
+  const downloadReceipt = () => {
     const doc = getReceiptDoc();
     if (doc) {
       doc.save(`${completedOrder.invoiceNumber}.pdf`);
+    }
+  };
+
+  const printReceipt = () => {
+    const doc = getReceiptDoc();
+    if (doc) {
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
     }
   };
 
@@ -456,7 +475,7 @@ const POS = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-          {['All Items', ...new Set(menuItems.filter(i => !i.isCustomization).map(i => i.category))].map(cat => (
+          {displayCategories.map(cat => (
             <button 
               key={cat}
               onClick={() => setActiveTab(cat)}
@@ -478,35 +497,34 @@ const POS = () => {
                 boxShadow: 'var(--shadow-sm)'
               }}
             >
-              <ChefHat size={24} />
+              {getCategoryIcon(cat)}
               {cat}
             </button>
           ))}
-          {menuItems.some(i => i.isCustomization) && (
-            <button 
-              onClick={() => setActiveTab('Customization')}
-              style={{ 
-                background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
-                color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
-                border: '1px solid',
-                borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
-                padding: '1rem 1.5rem', 
-                borderRadius: 'var(--radius-lg)', 
-                cursor: 'pointer', 
-                fontWeight: 600, 
-                fontSize: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                minWidth: '120px',
-                boxShadow: 'var(--shadow-sm)'
-              }}
-            >
-              <Plus size={24} />
-              Build Your Own
-            </button>
-          )}
+
+          <button 
+            onClick={() => setActiveTab('Customization')}
+            style={{ 
+              background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
+              color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
+              border: '1px solid',
+              borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
+              padding: '1rem 1.5rem', 
+              borderRadius: 'var(--radius-lg)', 
+              cursor: 'pointer', 
+              fontWeight: 600, 
+              fontSize: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem',
+              minWidth: '120px',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <Plus size={24} />
+            Build Your Own
+          </button>
         </div>
         
         <div className="pos-grid">
@@ -859,7 +877,10 @@ const POS = () => {
             <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Invoice: {completedOrder.invoiceNumber} • Paid via {completedOrder.paymentMethod}</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <button className="btn btn-primary" onClick={printReceipt} style={{ padding: '1.2rem' }}>
+              <button className="btn btn-primary" onClick={downloadReceipt} style={{ padding: '1.2rem' }}>
+                <Download size={20} /> Download PDF
+              </button>
+              <button className="btn btn-primary" onClick={printReceipt} style={{ padding: '1.2rem', background: '#3b82f6', border: 'none' }}>
                 <Printer size={20} /> Print Thermal Bill
               </button>
               <button className="btn btn-secondary" onClick={sendOnlineReceipt} style={{ padding: '1.2rem', borderColor: '#25D366', color: '#25D366' }}>

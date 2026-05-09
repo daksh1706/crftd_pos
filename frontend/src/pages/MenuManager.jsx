@@ -176,7 +176,7 @@ const MenuManager = () => {
       <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
         <button 
           onClick={() => setActiveTab('Signature')}
-          style={{ background: activeTab === 'Signature' ? 'rgba(245, 158, 11, 0.2)' : 'transparent', color: activeTab === 'Signature' ? '#f59e0b' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+          style={{ background: activeTab === 'Signature' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: activeTab === 'Signature' ? '#10b981' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
         >
           Signature Dishes
         </button>
