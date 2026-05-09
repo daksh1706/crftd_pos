@@ -4,7 +4,26 @@ import { jsPDF } from 'jspdf';
 import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
-const POS = () => {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{ padding: '2rem', color: 'red' }}><h1>Something went wrong.</h1><pre>{this.state.error.toString()}</pre><pre>{this.state.error.stack}</pre></div>;
+    }
+    return this.props.children; 
+  }
+}
+
+const POSInner = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState([]);
@@ -1091,5 +1110,11 @@ const POS = () => {
     </div>
   );
 };
+
+const POS = () => (
+  <ErrorBoundary>
+    <POSInner />
+  </ErrorBoundary>
+);
 
 export default POS;

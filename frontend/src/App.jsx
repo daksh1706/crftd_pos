@@ -9,8 +9,26 @@ import OrderLedger from './pages/OrderLedger';
 import ActiveOrders from './pages/ActiveOrders';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Sidebar from './components/Sidebar';
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{ padding: '2rem', color: 'red' }}><h1>App Level Error</h1><pre>{this.state.error.toString()}</pre><pre>{this.state.error.stack}</pre></div>;
+    }
+    return this.props.children; 
+  }
+}
 
-function App() {
+function AppInner() {
   return (
     <BrowserRouter>
       <div className="app-container">
@@ -30,6 +48,14 @@ function App() {
         </main>
       </div>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
   );
 }
 
