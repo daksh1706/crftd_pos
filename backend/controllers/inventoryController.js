@@ -4,7 +4,7 @@ export const getIngredients = async (req, res) => {
   try {
     const { data: ingredients, error } = await supabase
       .from('ingredients')
-      .select('*, recipe:ingredient_recipes(quantity, ingredient:ingredients!child_ingredient_id(*))');
+      .select('*, recipe:ingredient_recipes!parent_ingredient_id(quantity, ingredient:ingredients!child_ingredient_id(*))');
 
     if (error) throw error;
     
@@ -150,7 +150,7 @@ export const prepareIngredientBatch = async (req, res) => {
   try {
     const { data: ingredient, error } = await supabase
       .from('ingredients')
-      .select('*, recipe:ingredient_recipes(quantity, child_ingredient_id, ingredient:ingredients!child_ingredient_id(*))')
+      .select('*, recipe:ingredient_recipes!parent_ingredient_id(quantity, child_ingredient_id, ingredient:ingredients!child_ingredient_id(*))')
       .eq('id', id)
       .single();
 
