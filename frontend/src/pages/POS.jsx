@@ -138,7 +138,9 @@ const POS = () => {
 
   const handlePaymentInit = async (e) => {
     e.preventDefault();
-    if (paymentMethod === 'Stripe') {
+    
+    // Redirect to Stripe for UPI/Online Payments
+    if (paymentMethod === 'UPI') {
       handleProcessOrder(true);
       return;
     }
@@ -695,10 +697,10 @@ const POS = () => {
                   background: paymentMethod === method ? 'rgba(16, 185, 129, 0.1)' : '#ffffff',
                   color: paymentMethod === method ? 'var(--primary)' : 'var(--text-main)',
                   fontWeight: 600,
-                  cursor: 'pointer',
                   transition: 'var(--transition)'
                 }}
               >
+                {method}
               </button>
             ))}
           </div>
@@ -873,16 +875,9 @@ const POS = () => {
 
               {paymentMethod === 'UPI' && (
                 <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '1rem', border: '1px solid var(--border)', marginBottom: '1rem' }}>
-                    {/* Placeholder UPI ID. Change 'crftd@upi' to your real business UPI ID */}
-                    <QRCodeSVG 
-                      value={`upi://pay?pa=crftd@upi&pn=CRFTD&am=${total.toFixed(2)}&cu=INR`} 
-                      size={180}
-                      level="H"
-                    />
-                  </div>
-                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Scan to Pay ₹{total.toFixed(2)}</h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Use any UPI app (GPay, PhonePe, Paytm)</p>
+                  <Smartphone size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Online UPI Checkout</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>You will be redirected to the secure Stripe payment gateway to complete the UPI transaction of ₹{total.toFixed(2)}.</p>
                 </div>
               )}
 
@@ -895,7 +890,7 @@ const POS = () => {
                     {isProcessing ? 'Processing...' : (
                       paymentMethod === 'Card' && !cardAwaiting ? 'Initiate Card Payment' :
                       paymentMethod === 'Card' && cardAwaiting ? 'Confirm Terminal Success' :
-                      paymentMethod === 'UPI' ? 'Verify UPI Payment' :
+                      paymentMethod === 'UPI' ? 'Proceed to Stripe Payment' :
                       'Complete Payment'
                     )}
                  </button>
