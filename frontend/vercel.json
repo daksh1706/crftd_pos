@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://crftd-backend.onrender.com/api/:path*"
+      "destination": "https://crftd-pos-1.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
