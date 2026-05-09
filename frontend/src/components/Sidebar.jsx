@@ -8,7 +8,8 @@ import {
   Settings as SettingsIcon,
   BookOpen,
   Bell,
-  LogOut
+  LogOut,
+  Plus
 } from 'lucide-react';
 
 const Sidebar = () => {
