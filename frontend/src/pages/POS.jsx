@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -120,9 +120,8 @@ const POS = () => {
     Syrup: menuItems.filter(i => i.isCustomization && i.customizationType === 'Syrup')
   };
 
-  const PREDEFINED_CATEGORIES = ['Waffles', 'Pancakes', 'Crepes', 'Shakes', 'Beverages', 'Savory'];
-  const dynamicCategories = [...new Set(menuItems.filter(i => !i.isCustomization).map(i => i.category))];
-  const displayCategories = ['All Items', ...new Set([...PREDEFINED_CATEGORIES, ...dynamicCategories])];
+  const PREDEFINED_CATEGORIES = ['Waffles', 'Pancakes', 'Coffee', 'Shakes', 'Smoothies'];
+  const displayCategories = ['All Items', ...PREDEFINED_CATEGORIES];
 
   const getCategoryIcon = (catName) => {
     const name = catName.toLowerCase();
@@ -404,9 +403,14 @@ const POS = () => {
   };
 
   const downloadReceipt = () => {
-    const doc = getReceiptDoc();
-    if (doc) {
-      doc.save(`${completedOrder.invoiceNumber}.pdf`);
+    try {
+      const doc = getReceiptDoc();
+      if (doc) {
+        doc.save(`${completedOrder.invoiceNumber}.pdf`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("PDF Error: " + err.message);
     }
   };
 
