@@ -667,7 +667,7 @@ const POS = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            {['Cash', 'Card', 'UPI', 'Stripe'].map(method => (
+            {['Cash', 'Card', 'UPI'].map(method => (
               <button 
                 key={method}
                 onClick={() => setPaymentMethod(method)}
@@ -684,7 +684,6 @@ const POS = () => {
                   transition: 'var(--transition)'
                 }}
               >
-                {method === 'Stripe' ? 'Online Payment' : method}
               </button>
             ))}
           </div>
@@ -872,14 +871,6 @@ const POS = () => {
                 </div>
               )}
 
-              {paymentMethod === 'Stripe' && (
-                <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Smartphone size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Stripe Online Checkout</h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>You will be redirected to the secure Stripe payment page to complete the transaction of ₹{total.toFixed(2)}.</p>
-                </div>
-              )}
-
               <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                  <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total Amount</span>
@@ -890,7 +881,6 @@ const POS = () => {
                       paymentMethod === 'Card' && !cardAwaiting ? 'Initiate Card Payment' :
                       paymentMethod === 'Card' && cardAwaiting ? 'Confirm Terminal Success' :
                       paymentMethod === 'UPI' ? 'Verify UPI Payment' :
-                      paymentMethod === 'Stripe' ? 'Proceed to Online Checkout' :
                       'Complete Payment'
                     )}
                  </button>

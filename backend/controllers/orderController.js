@@ -214,11 +214,31 @@ export const createOrder = async (req, res) => {
       .eq('id', order.id)
       .single();
 
-    const responseData = {
-      ...populatedOrder,
-      _id: populatedOrder.id,
-      customerDetails
+    // Helper function to map Supabase snake_case to frontend camelCase
+    const formatOrderForFrontend = (o) => {
+      if (!o) return o;
+      return {
+        ...o,
+        _id: o.id,
+        createdAt: o.created_at,
+        invoiceNumber: o.invoice_number,
+        orderNumber: o.order_number,
+        taxAmount: o.tax_amount,
+        discountAmount: o.discount_amount,
+        totalAmount: o.total_amount,
+        paymentMethod: o.payment_method,
+        cashGiven: o.cash_given,
+        changeDue: o.change_due,
+        customerDetails: o.customer,
+        items: o.items ? o.items.map(i => ({
+          ...i,
+          menuItemId: i.menu_item_id,
+          priceAtTime: i.price_at_time
+        })) : []
+      };
     };
+
+    const responseData = formatOrderForFrontend(populatedOrder);
 
     if (req.io) {
       req.io.emit('order_created', responseData);
@@ -264,8 +284,31 @@ export const getOrders = async (req, res) => {
 
     if (error) throw error;
     
+    const formatOrderForFrontend = (o) => {
+      if (!o) return o;
+      return {
+        ...o,
+        _id: o.id,
+        createdAt: o.created_at,
+        invoiceNumber: o.invoice_number,
+        orderNumber: o.order_number,
+        taxAmount: o.tax_amount,
+        discountAmount: o.discount_amount,
+        totalAmount: o.total_amount,
+        paymentMethod: o.payment_method,
+        cashGiven: o.cash_given,
+        changeDue: o.change_due,
+        customerDetails: o.customer,
+        items: o.items ? o.items.map(i => ({
+          ...i,
+          menuItemId: i.menu_item_id,
+          priceAtTime: i.price_at_time
+        })) : []
+      };
+    };
+    
     // Quick format for frontend compatibility
-    const formatted = orders.map(o => ({...o, _id: o.id, createdAt: o.created_at}));
+    const formatted = orders.map(formatOrderForFrontend);
     res.json(formatted);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -284,7 +327,30 @@ export const updateOrderStatus = async (req, res) => {
 
     if (error) throw error;
 
-    const formatted = {...order, _id: order.id, createdAt: order.created_at};
+    const formatOrderForFrontend = (o) => {
+      if (!o) return o;
+      return {
+        ...o,
+        _id: o.id,
+        createdAt: o.created_at,
+        invoiceNumber: o.invoice_number,
+        orderNumber: o.order_number,
+        taxAmount: o.tax_amount,
+        discountAmount: o.discount_amount,
+        totalAmount: o.total_amount,
+        paymentMethod: o.payment_method,
+        cashGiven: o.cash_given,
+        changeDue: o.change_due,
+        customerDetails: o.customer,
+        items: o.items ? o.items.map(i => ({
+          ...i,
+          menuItemId: i.menu_item_id,
+          priceAtTime: i.price_at_time
+        })) : []
+      };
+    };
+
+    const formatted = formatOrderForFrontend(order);
     if (req.io) {
       req.io.emit('order_status_updated', formatted);
     }
@@ -344,7 +410,30 @@ export const confirmStripePayment = async (req, res) => {
       }
     }
 
-    res.json({...finalOrder, _id: finalOrder.id, customerDetails: finalOrder.customer});
+    const formatOrderForFrontend = (o) => {
+      if (!o) return o;
+      return {
+        ...o,
+        _id: o.id,
+        createdAt: o.created_at,
+        invoiceNumber: o.invoice_number,
+        orderNumber: o.order_number,
+        taxAmount: o.tax_amount,
+        discountAmount: o.discount_amount,
+        totalAmount: o.total_amount,
+        paymentMethod: o.payment_method,
+        cashGiven: o.cash_given,
+        changeDue: o.change_due,
+        customerDetails: o.customer,
+        items: o.items ? o.items.map(i => ({
+          ...i,
+          menuItemId: i.menu_item_id,
+          priceAtTime: i.price_at_time
+        })) : []
+      };
+    };
+
+    res.json(formatOrderForFrontend(finalOrder));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
