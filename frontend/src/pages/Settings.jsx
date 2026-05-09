@@ -13,7 +13,7 @@ const Settings = () => {
         {/* Settings Nav */}
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button className="btn hover-brighten" style={{ justifyContent: 'flex-start', background: 'rgba(255,255,255,0.05)', color: 'white', padding: '1rem' }}>
+            <button className="btn hover-brighten" style={{ justifyContent: 'flex-start', background: '#ffffff', color: 'var(--text-main)', padding: '1rem' }}>
               <Store size={18} /> Store Details
             </button>
             <button className="btn hover-brighten" style={{ justifyContent: 'flex-start', background: 'transparent', color: 'var(--text-muted)', padding: '1rem' }}>

@@ -199,7 +199,7 @@ const MenuManager = () => {
                 {item.image ? (
                    <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
                 ) : (
-                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ChefHat size={24} color="var(--text-muted)" /></div>
+                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ChefHat size={24} color="var(--text-muted)" /></div>
                 )}
                 
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -210,7 +210,7 @@ const MenuManager = () => {
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-main)', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                       {item.isCustomization ? `${item.customizationType}` : item.category}
                     </span>
                     <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.1rem' }}>₹{item.price}</span>
@@ -220,7 +220,7 @@ const MenuManager = () => {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
-                <button onClick={() => openModal(item)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }} className="hover-brighten">
+                <button onClick={() => openModal(item)} style={{ background: '#ffffff', border: '1px solid var(--border)', color: 'var(--text-main)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }} className="hover-brighten">
                   <Edit2 size={14} />
                 </button>
                 <button onClick={() => deleteItem(item._id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }}>
@@ -245,7 +245,7 @@ const MenuManager = () => {
               <div style={{ marginTop: 'auto' }}>
                 <button 
                   onClick={() => setExpandedDetails(expandedDetails === item._id ? null : item._id)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-muted)', width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'var(--transition)' }}
+                  style={{ background: '#ffffff', border: '1px solid var(--border)', color: 'var(--text-muted)', width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'var(--transition)' }}
                   className="hover-brighten"
                 >
                   <Info size={16} />
@@ -253,11 +253,11 @@ const MenuManager = () => {
                 </button>
                 
                 {expandedDetails === item._id && (
-                  <div style={{ marginTop: '0.75rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                  <div style={{ marginTop: '0.75rem', padding: '1rem', background: 'var(--bg-dark)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
                     {item.description && <p style={{ marginBottom: '0.5rem' }}><em>"{item.description}"</em></p>}
                     
                     {item.nutritionalInfo && (item.nutritionalInfo.calories || item.nutritionalInfo.protein) && (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '4px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem', background: '#ffffff', padding: '0.5rem', borderRadius: '4px' }}>
                         <div><strong>Cal:</strong> {item.nutritionalInfo.calories || '-'}</div>
                         <div><strong>Pro:</strong> {item.nutritionalInfo.protein || '-'}g</div>
                         <div><strong>Carb:</strong> {item.nutritionalInfo.carbs || '-'}g</div>
@@ -324,7 +324,7 @@ const MenuManager = () => {
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                 <input 
                   type="checkbox" 
                   id="isCustomization"
@@ -338,7 +338,7 @@ const MenuManager = () => {
               </div>
 
               {/* Status Row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                 <input 
                   type="checkbox" 
                   id="availability"
@@ -385,7 +385,7 @@ const MenuManager = () => {
               </div>
 
               {/* Nutritional Info */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Nutritional Information (Optional)</label>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <input type="number" placeholder="Calories (kcal)" value={formData.nutritionalInfo.calories} onChange={e => setFormData({...formData, nutritionalInfo: {...formData.nutritionalInfo, calories: e.target.value}})} />
@@ -396,7 +396,7 @@ const MenuManager = () => {
               </div>
 
               {/* Prep Instructions */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Preparation Instructions (Kitchen)</label>
                 <textarea 
                   rows="3"
@@ -408,7 +408,7 @@ const MenuManager = () => {
               </div>
 
               {/* Recipe Array */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', background: 'var(--bg-dark)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.25rem 0' }}>Ingredient Formula</h3>
@@ -422,9 +422,9 @@ const MenuManager = () => {
                 {formData.recipe.length === 0 ? (
                   <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '2rem 0' }}>No ingredients added yet.</p>
                 ) : formData.recipe.map((r, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div key={i} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', background: '#ffffff', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
                     <select 
-                      style={{ flex: 2, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }} 
+                      style={{ flex: 2, background: 'var(--bg-dark)', border: '1px solid var(--border)' }} 
                       value={typeof r.ingredient === 'object' ? r.ingredient._id : r.ingredient} 
                       onChange={e => handleRecipeChange(i, 'ingredient', e.target.value)}
                     >
@@ -434,7 +434,7 @@ const MenuManager = () => {
                     </select>
                     <input 
                       type="number" 
-                      style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }} 
+                      style={{ flex: 1, background: 'var(--bg-dark)', border: '1px solid var(--border)' }} 
                       placeholder="Qty required" 
                       step="0.01"
                       value={r.quantity} 

@@ -171,7 +171,7 @@ const Reports = () => {
           <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Recent Transactions</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
             {filteredOrders.slice(0, 10).map(order => (
-              <div key={order._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+              <div key={order._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#ffffff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
                 <div>
                   <h4 style={{ margin: '0 0 0.25rem 0', fontFamily: 'monospace', fontSize: '1.1rem', color: 'var(--primary)' }}>
                     Order #{order.orderNumber || order.invoiceNumber.split('-')[1]}

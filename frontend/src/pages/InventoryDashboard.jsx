@@ -245,7 +245,7 @@ const InventoryDashboard = () => {
               </div>
 
               {/* Recipe for Pre-Cooked Items */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', background: 'var(--bg-dark)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem 0' }}>Batch Recipe (Optional)</h3>
@@ -257,9 +257,9 @@ const InventoryDashboard = () => {
                 </div>
                 
                 {formData.recipe.map((r, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div key={i} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', background: '#ffffff', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
                     <select 
-                      style={{ flex: 2, background: 'rgba(0,0,0,0.3)' }} 
+                      style={{ flex: 2, background: 'var(--bg-dark)' }} 
                       value={r.ingredient} 
                       onChange={e => handleRecipeChange(i, 'ingredient', e.target.value)}
                     >
@@ -269,7 +269,7 @@ const InventoryDashboard = () => {
                     </select>
                     <input 
                       type="number" 
-                      style={{ flex: 1, background: 'rgba(0,0,0,0.3)' }} 
+                      style={{ flex: 1, background: 'var(--bg-dark)' }} 
                       placeholder="Qty used" 
                       step="0.01"
                       value={r.quantity} 

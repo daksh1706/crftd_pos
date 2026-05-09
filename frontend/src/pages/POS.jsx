@@ -435,22 +435,62 @@ const POS = () => {
   return (
     <div style={{ display: 'flex', height: '100%', gap: '2rem' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Point of Sale</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Select an item to view details or add it directly to cart</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', margin: '0 0 0.25rem 0', color: 'var(--text-main)' }}>Point of Sale</h1>
+            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>Select an item to view details or add it directly to cart</p>
+          </div>
+          <div style={{ position: 'relative', width: '300px' }}>
+            <Search size={20} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <input type="text" placeholder="Search Product here..." style={{ paddingLeft: '3rem', borderRadius: 'var(--radius-xl)', background: '#ffffff', boxShadow: 'var(--shadow-sm)' }} />
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           <button 
             onClick={() => setActiveTab('Signature')}
-            style={{ background: activeTab === 'Signature' ? 'rgba(245, 158, 11, 0.2)' : 'transparent', color: activeTab === 'Signature' ? '#f59e0b' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+            style={{ 
+              background: activeTab === 'Signature' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
+              color: activeTab === 'Signature' ? 'var(--primary)' : 'var(--text-main)', 
+              border: '1px solid',
+              borderColor: activeTab === 'Signature' ? 'var(--primary)' : 'var(--border)', 
+              padding: '1rem 1.5rem', 
+              borderRadius: 'var(--radius-lg)', 
+              cursor: 'pointer', 
+              fontWeight: 600, 
+              fontSize: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem',
+              minWidth: '120px',
+              boxShadow: 'var(--shadow-sm)'
+            }}
           >
-            Signature Dishes
+            <ChefHat size={24} />
+            Signature
           </button>
           <button 
             onClick={() => setActiveTab('Customization')}
-            style={{ background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.2)' : 'transparent', color: activeTab === 'Customization' ? '#10b981' : 'var(--text-muted)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem' }}
+            style={{ 
+              background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
+              color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
+              border: '1px solid',
+              borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
+              padding: '1rem 1.5rem', 
+              borderRadius: 'var(--radius-lg)', 
+              cursor: 'pointer', 
+              fontWeight: 600, 
+              fontSize: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem',
+              minWidth: '120px',
+              boxShadow: 'var(--shadow-sm)'
+            }}
           >
+            <Plus size={24} />
             Build Your Own
           </button>
         </div>
@@ -470,9 +510,9 @@ const POS = () => {
               }}
             >
               {item.image ? (
-                <img src={item.image} alt={item.name} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', marginBottom: '1rem', border: '2px solid rgba(255,255,255,0.1)' }} />
+                <img src={item.image} alt={item.name} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }} />
               ) : (
-                <div style={{ width: '100px', height: '100px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><ChefHat size={40} color="var(--text-muted)" /></div>
+                <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><ChefHat size={40} color="var(--text-muted)" /></div>
               )}
               
               <span className="pos-item-category">
@@ -487,20 +527,19 @@ const POS = () => {
               <p className="pos-item-price">₹{item.price}</p>
               
               {item.isAvailable !== false && (
-                <div className="pos-item-actions">
-                  <button 
-                    onClick={() => setSelectedProduct(item)} 
-                    className="btn btn-secondary" 
-                    style={{ flex: 1, padding: '0.6rem 0', fontSize: '0.85rem' }}
-                  >
-                    <Info size={14} /> Details
-                  </button>
+                <div className="pos-item-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>
                   <button 
                     onClick={(e) => addToCart(item, e)} 
-                    className="btn btn-primary" 
-                    style={{ flex: 1, padding: '0.6rem 0', fontSize: '0.85rem' }}
+                    className="btn" 
+                    style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--primary)', border: 'none', fontWeight: 700 }}
                   >
-                    <Plus size={14} /> Add
+                    Add to Dish
+                  </button>
+                  <button 
+                    onClick={() => setSelectedProduct(item)} 
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                  >
+                    View Details
                   </button>
                 </div>
               )}
@@ -531,9 +570,9 @@ const POS = () => {
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button onClick={() => updateQty(item.cartItemId, -1)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer' }}>-</button>
+                  <button onClick={() => updateQty(item.cartItemId, -1)} style={{ background: 'var(--bg-dark)', border: '1px solid var(--border)', color: 'var(--text-main)', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
                   <span style={{ fontWeight: 600 }}>{item.qty}</span>
-                  <button onClick={() => updateQty(item.cartItemId, 1)} style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', border: 'none', color: 'white', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 10px rgba(245, 158, 11, 0.4)' }}>+</button>
+                  <button onClick={() => updateQty(item.cartItemId, 1)} style={{ background: 'rgba(16, 185, 129, 0.15)', border: 'none', color: 'var(--primary)', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>+</button>
                 </div>
                 <div style={{ marginLeft: '1rem', fontWeight: 600, width: '60px', textAlign: 'right' }}>
                   ₹{(item.price * item.qty).toFixed(0)}
@@ -572,14 +611,24 @@ const POS = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            {['Cash', 'Stripe', 'Card'].map(method => (
+            {['Cash', 'Card', 'Stripe'].map(method => (
               <button 
                 key={method}
                 onClick={() => setPaymentMethod(method)}
-                className={`btn ${paymentMethod === method ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ flex: 1, padding: '0.75rem 0.5rem' }}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.75rem 0.5rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid',
+                  borderColor: paymentMethod === method ? 'var(--primary)' : 'var(--border)',
+                  background: paymentMethod === method ? 'rgba(16, 185, 129, 0.1)' : '#ffffff',
+                  color: paymentMethod === method ? 'var(--primary)' : 'var(--text-main)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
               >
-                {method}
+                {method === 'Stripe' ? 'QR Code' : method}
               </button>
             ))}
           </div>
@@ -597,22 +646,22 @@ const POS = () => {
 
       {/* Product Details Modal */}
       {selectedProduct && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass animate-slide-up" style={{ width: '500px', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-            <div style={{ position: 'relative', height: '250px', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass animate-slide-up" style={{ width: '500px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: '#ffffff' }}>
+            <div style={{ position: 'relative', height: '250px', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {selectedProduct.image ? (
                 <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <ChefHat size={80} color="var(--text-muted)" />
               )}
-              <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '50%', padding: '0.5rem' }}><X size={20} /></button>
+              <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'var(--text-main)', cursor: 'pointer', borderRadius: '50%', padding: '0.5rem' }}><X size={20} /></button>
             </div>
             
             <div style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem 0' }}>{selectedProduct.name}</h2>
-                  <span style={{ fontSize: '0.8rem', color: 'white', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
                 </div>
                 <span style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 'bold' }}>
                   ₹{(selectedProduct.price + selectedCustomizations.reduce((sum, c) => sum + c.price, 0)).toFixed(2)}
@@ -625,19 +674,19 @@ const POS = () => {
 
               {/* Nutrition Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Calories</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.calories || '-'}</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Protein</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.protein || '-'}g</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Carbs</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.carbs || '-'}g</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: 'var(--radius-sm)', textAlign: 'center', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Fat</div>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedProduct.nutritionalInfo?.fat || '-'}g</div>
                 </div>
@@ -683,8 +732,8 @@ const POS = () => {
 
       {/* Checkout Step 1 Modal: Customer CRM */}
       {showCustomerModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass animate-slide-up" style={{ width: '450px', borderRadius: 'var(--radius-lg)', padding: '2.5rem' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass animate-slide-up" style={{ width: '450px', borderRadius: 'var(--radius-lg)', padding: '2.5rem', background: '#ffffff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Customer Details</h2>
               <button onClick={() => setShowCustomerModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={24} /></button>
@@ -745,7 +794,7 @@ const POS = () => {
               )}
 
               {paymentMethod === 'Card' && cardAwaiting && (
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
                   <CreditCard size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
                   <h3 style={{ margin: '0 0 0.5rem 0' }}>Awaiting Card Swipe</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Please complete the transaction of ₹{total.toFixed(2)} on the card terminal.</p>
@@ -753,14 +802,14 @@ const POS = () => {
               )}
 
               {paymentMethod === 'Stripe' && (
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <Smartphone size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
                   <h3 style={{ margin: '0 0 0.5rem 0' }}>Stripe Online Checkout</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>You will be redirected to the secure Stripe payment page to complete the transaction of ₹{total.toFixed(2)}.</p>
                 </div>
               )}
 
-              <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                  <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total Amount</span>
                     <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent)' }}>₹{total.toFixed(2)}</span>
@@ -781,8 +830,8 @@ const POS = () => {
 
       {/* Checkout Step 2 Modal: Success & Bill Options */}
       {showSuccessModal && completedOrder && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass animate-slide-up" style={{ width: '500px', borderRadius: 'var(--radius-lg)', padding: '3rem', textAlign: 'center' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass animate-slide-up" style={{ width: '500px', borderRadius: 'var(--radius-lg)', padding: '3rem', textAlign: 'center', background: '#ffffff' }}>
             <CheckCircle size={64} color="var(--accent)" style={{ margin: '0 auto 1.5rem auto' }} />
             <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Order Successful!</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Invoice: {completedOrder.invoiceNumber} • Paid via {completedOrder.paymentMethod}</p>

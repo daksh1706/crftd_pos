@@ -78,7 +78,7 @@ const ActiveOrders = () => {
             {preparingOrders.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '2rem' }}>No orders in queue.</p>
             ) : preparingOrders.map(order => (
-              <div key={order._id} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+              <div key={order._id} style={{ background: 'var(--bg-dark)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                   <h3 style={{ margin: 0, fontFamily: 'monospace', fontSize: '1.2rem', color: 'var(--text-main)' }}>Order #{order.orderNumber || order.invoiceNumber.split('-')[1]}</h3>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={14}/> {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>

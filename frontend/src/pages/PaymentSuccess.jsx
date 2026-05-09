@@ -202,7 +202,7 @@ const PaymentSuccess = () => {
         <CheckCircle size={64} color="#10b981" style={{ margin: '0 auto 1.5rem auto' }} />
         <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Payment Successful!</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          Order <strong style={{ color: 'white' }}>{order.invoiceNumber}</strong> has been confirmed.
+          Order <strong style={{ color: 'var(--text-main)' }}>{order.invoiceNumber}</strong> has been confirmed.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
