@@ -91,7 +91,7 @@ const Reports = () => {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+      <div className="mobile-grid-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'linear-gradient(135deg, rgba(16,185,129,0.2), transparent)', width: '100px', height: '100px', borderRadius: '50%' }}></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -134,7 +134,7 @@ const Reports = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+      <div className="mobile-grid-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
         {/* Chart */}
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', padding: '2rem' }}>
           <h3 style={{ marginBottom: '2rem', fontSize: '1.25rem' }}>Revenue Trend ({timeFilter})</h3>

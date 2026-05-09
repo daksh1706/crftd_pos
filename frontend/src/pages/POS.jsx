@@ -8,6 +8,7 @@ const POS = () => {
   const [activeTab, setActiveTab] = useState('All Items');
   const [cart, setCart] = useState([]);
   const [discountPercent, setDiscountPercent] = useState('');
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('Stripe');
   
   // Checkout Modals State
@@ -604,10 +605,24 @@ const POS = () => {
         </div>
       </div>
 
+      {/* Cart Overlay for Mobile */}
+      <div 
+        className={`cart-overlay ${isMobileCartOpen ? 'open' : ''}`} 
+        onClick={() => setIsMobileCartOpen(false)}
+      ></div>
+
       {/* Cart Sidebar */}
-      <div className="cart-sidebar glass" style={{ borderRadius: 'var(--radius-lg)' }}>
-        <div className="cart-header">
-          <h2>Current Order</h2>
+      <div className={`cart-sidebar glass ${isMobileCartOpen ? 'mobile-open' : ''}`} style={{ borderRadius: 'var(--radius-lg)' }}>
+        <div className="cart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0 }}>Current Order</h2>
+          {/* Close button for mobile */}
+          <button 
+            className="btn btn-secondary d-md-none" 
+            style={{ padding: '0.5rem', background: 'transparent', border: 'none' }}
+            onClick={() => setIsMobileCartOpen(false)}
+          >
+            <X size={24} color="var(--text-main)" />
+          </button>
         </div>
         
         <div className="cart-items">
@@ -919,6 +934,26 @@ const POS = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile Cart Overlay */}
+      {isMobileCartOpen && (
+        <div 
+          className="mobile-cart-overlay" 
+          onClick={() => setIsMobileCartOpen(false)}
+        />
+      )}
+
+      {/* Mobile Floating Action Button */}
+      <button 
+        className="mobile-fab" 
+        onClick={() => setIsMobileCartOpen(true)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <ShoppingCart size={20} />
+          <span>{cart.length} Items</span>
+        </div>
+        <span>₹{total.toFixed(2)}</span>
+      </button>
 
     </div>
   );

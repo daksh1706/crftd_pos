@@ -65,7 +65,7 @@ const ActiveOrders = () => {
         <p style={{ color: 'var(--text-muted)' }}>Manage active orders and notify customers for pickup</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', flex: 1, overflow: 'hidden' }}>
+      <div className="mobile-stack" style={{ display: 'flex', gap: '2rem', flex: 1, overflow: 'hidden' }}>
         
         {/* Preparing Column */}
         <div className="glass" style={{ flex: 1, borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
