@@ -39,9 +39,15 @@ const POS = () => {
     try {
       const res = await fetch('/api/menu');
       const data = await res.json();
-      setMenuItems(data);
+      if (Array.isArray(data)) {
+        setMenuItems(data);
+      } else {
+        console.error('API returned non-array data:', data);
+        setMenuItems([]);
+      }
     } catch (err) {
       console.error('Failed to fetch menu', err);
+      setMenuItems([]);
     }
   };
 
