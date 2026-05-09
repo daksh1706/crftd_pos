@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
-import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft, ShoppingCart } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 class ErrorBoundary extends React.Component {
