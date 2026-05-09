@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
-import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download } from 'lucide-react';
+import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 const POS = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState([]);
   const [activeTab, setActiveTab] = useState('All Items');
   const [cart, setCart] = useState([]);
@@ -34,6 +37,24 @@ const POS = () => {
   
   // Payment variables missing state
   const [cashGiven, setCashGiven] = useState('');
+
+  // Builder Wizard State
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [builderStep, setBuilderStep] = useState(0); 
+  const [builderBase, setBuilderBase] = useState(null);
+  const [builderCustomizations, setBuilderCustomizations] = useState([]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('build') === 'true') {
+      setShowBuilder(true);
+      setBuilderStep(0);
+      setBuilderBase(null);
+      setBuilderCustomizations([]);
+      // Clear URL parameter so it doesn't re-trigger
+      navigate('/pos', { replace: true });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     fetchMenu();
@@ -508,41 +529,15 @@ const POS = () => {
               {cat}
             </button>
           ))}
-
-          <button 
-            onClick={() => setActiveTab('Customization')}
-            style={{ 
-              background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
-              color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
-              border: '1px solid',
-              borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
-              padding: '1rem 1.5rem', 
-              borderRadius: 'var(--radius-lg)', 
-              cursor: 'pointer', 
-              fontWeight: 600, 
-              fontSize: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              minWidth: '120px',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <Plus size={24} />
-            Build Your Own
-          </button>
         </div>
         
         <div className="pos-grid">
           {menuItems.filter(item => {
-            if (activeTab === 'Customization') return !item.isCustomization;
             if (activeTab === 'All Items') return !item.isCustomization;
             return !item.isCustomization && item.category === activeTab;
           }).length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No items found in this category.</p>
           ) : menuItems.filter(item => {
-            if (activeTab === 'Customization') return !item.isCustomization;
             if (activeTab === 'All Items') return !item.isCustomization;
             return !item.isCustomization && item.category === activeTab;
           }).map(item => (
@@ -575,31 +570,19 @@ const POS = () => {
               
               {item.isAvailable !== false && (
                 <div className="pos-item-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-                  {activeTab === 'Customization' ? (
                     <button 
-                      onClick={() => setSelectedProduct(item)} 
+                      onClick={(e) => addToCart(item, e)} 
                       className="btn" 
-                      style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', fontWeight: 700 }}
+                      style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--primary)', border: 'none', fontWeight: 700 }}
                     >
-                      Customize Base
+                      Add to Dish
                     </button>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={(e) => addToCart(item, e)} 
-                        className="btn" 
-                        style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--primary)', border: 'none', fontWeight: 700 }}
-                      >
-                        Add to Dish
-                      </button>
                       <button 
                         onClick={() => setSelectedProduct(item)} 
                         style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
                       >
                         View Details
                       </button>
-                    </>
-                  )}
                 </div>
               )}
             </div>
@@ -715,6 +698,161 @@ const POS = () => {
           </button>
         </div>
       </div>
+
+      {/* Custom Dish Builder Wizard */}
+      {showBuilder && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+          <div className="glass animate-slide-up" style={{ width: '90%', maxWidth: '800px', height: '80vh', borderRadius: 'var(--radius-lg)', background: '#ffffff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            
+            {/* Header */}
+            <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-dark)' }}>
+              <div>
+                <h2 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <ChefHat color="var(--primary)" /> Build Your Own Dish
+                </h2>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                  {['Base', 'Flavour', 'Topping', 'Filling', 'Syrup'].map((stepName, idx) => (
+                    <span key={stepName} style={{ 
+                      color: builderStep === idx ? 'var(--primary)' : builderStep > idx ? 'var(--text-main)' : 'var(--text-subtle)',
+                      fontWeight: builderStep === idx ? 700 : 500,
+                      display: 'flex', alignItems: 'center', gap: '0.25rem'
+                    }}>
+                      {stepName}
+                      {idx < 4 && <ChevronRight size={14} color="var(--text-subtle)" />}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => setShowBuilder(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem' }}><X size={24} color="var(--text-muted)" /></button>
+            </div>
+
+            {/* Content Area */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '2rem', background: 'var(--bg-dark)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
+                {(() => {
+                  let options = [];
+                  if (builderStep === 0) options = menuItems.filter(i => !i.isCustomization);
+                  if (builderStep === 1) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Flavour');
+                  if (builderStep === 2) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Topping');
+                  if (builderStep === 3) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Filling');
+                  if (builderStep === 4) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Syrup');
+
+                  if (options.length === 0) return <p style={{ color: 'var(--text-muted)', gridColumn: '1 / -1' }}>No options available for this step. Click Next to skip.</p>;
+
+                  return options.map(item => {
+                    const isBaseSelected = builderStep === 0 && builderBase?._id === item._id;
+                    const isCustomSelected = builderStep > 0 && builderCustomizations.some(c => c._id === item._id);
+                    const isSelected = isBaseSelected || isCustomSelected;
+
+                    return (
+                      <div 
+                        key={item._id}
+                        onClick={() => {
+                          if (builderStep === 0) {
+                            setBuilderBase(item);
+                            setBuilderStep(1);
+                          } else {
+                            if (isCustomSelected) {
+                              setBuilderCustomizations(prev => prev.filter(c => c._id !== item._id));
+                            } else {
+                              setBuilderCustomizations(prev => [...prev, item]);
+                            }
+                          }
+                        }}
+                        style={{
+                          background: isSelected ? 'rgba(16, 185, 129, 0.1)' : '#ffffff',
+                          border: '2px solid',
+                          borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '1rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          transition: 'var(--transition)',
+                          boxShadow: 'var(--shadow-sm)',
+                          position: 'relative'
+                        }}
+                      >
+                        {isSelected && <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '0.2rem' }}><CheckCircle size={18} /></div>}
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '50%', marginBottom: '1rem' }} />
+                        ) : (
+                          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><Utensils size={32} color="var(--text-muted)" /></div>
+                        )}
+                        <span style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>{item.name}</span>
+                        <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+₹{item.price}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Footer & Actions */}
+            <div style={{ padding: '1.5rem 2rem', background: '#ffffff', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Running Total</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)' }}>
+                  ₹{((builderBase?.price || 0) + builderCustomizations.reduce((sum, c) => sum + c.price, 0)).toFixed(2)}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setBuilderStep(prev => Math.max(0, prev - 1))}
+                  disabled={builderStep === 0}
+                >
+                  <ChevronLeft size={20} /> Back
+                </button>
+                
+                {builderStep < 4 ? (
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => setBuilderStep(prev => prev + 1)}
+                    disabled={builderStep === 0 && !builderBase}
+                  >
+                    Next Step <ChevronRight size={20} />
+                  </button>
+                ) : (
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                      if (!builderBase) return alert("Please select a base dish first!");
+                      const customIds = builderCustomizations.map(c => c._id).sort().join(',');
+                      const cartItemId = builderBase._id + customIds;
+                      
+                      const formattedCustomizations = builderCustomizations.map(c => ({
+                        menuItemId: c._id,
+                        name: c.name,
+                        price: c.price
+                      }));
+
+                      setCart(prev => {
+                        const existing = prev.find(i => i.cartItemId === cartItemId);
+                        if (existing) {
+                          return prev.map(i => i.cartItemId === cartItemId ? { ...i, qty: i.qty + 1 } : i);
+                        }
+                        return [...prev, { ...builderBase, cartItemId, qty: 1, customizations: formattedCustomizations }];
+                      });
+
+                      setShowBuilder(false);
+                      setBuilderStep(0);
+                      setBuilderBase(null);
+                      setBuilderCustomizations([]);
+                    }}
+                    style={{ background: '#f59e0b', color: 'black' }}
+                  >
+                    <Plus size={20} /> Add to Cart
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Product Details Modal */}
       {selectedProduct && (
