@@ -219,6 +219,8 @@ input::placeholder, textarea::placeholder {
 /* Sidebar / Cart */
 .cart-sidebar {
   width: 400px;
+  min-width: 400px;
+  flex-shrink: 0;
   background-color: var(--bg-panel);
   border-left: 1px solid var(--border);
   display: flex;

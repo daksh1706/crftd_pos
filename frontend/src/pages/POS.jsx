@@ -466,7 +466,7 @@ const POS = () => {
 
   return (
     <div style={{ display: 'flex', height: '100%', gap: '2rem' }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', margin: '0 0 0.25rem 0', color: 'var(--text-main)' }}>Point of Sale</h1>
@@ -533,13 +533,13 @@ const POS = () => {
         
         <div className="pos-grid">
           {menuItems.filter(item => {
-            if (activeTab === 'Customization') return item.isCustomization && item.customizationType === 'Base';
+            if (activeTab === 'Customization') return !item.isCustomization;
             if (activeTab === 'All Items') return !item.isCustomization;
             return !item.isCustomization && item.category === activeTab;
           }).length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No items found in this category.</p>
           ) : menuItems.filter(item => {
-            if (activeTab === 'Customization') return item.isCustomization && item.customizationType === 'Base';
+            if (activeTab === 'Customization') return !item.isCustomization;
             if (activeTab === 'All Items') return !item.isCustomization;
             return !item.isCustomization && item.category === activeTab;
           }).map(item => (
@@ -572,19 +572,31 @@ const POS = () => {
               
               {item.isAvailable !== false && (
                 <div className="pos-item-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-                  <button 
-                    onClick={(e) => addToCart(item, e)} 
-                    className="btn" 
-                    style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--primary)', border: 'none', fontWeight: 700 }}
-                  >
-                    Add to Dish
-                  </button>
-                  <button 
-                    onClick={() => setSelectedProduct(item)} 
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
-                  >
-                    View Details
-                  </button>
+                  {activeTab === 'Customization' ? (
+                    <button 
+                      onClick={() => setSelectedProduct(item)} 
+                      className="btn" 
+                      style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', fontWeight: 700 }}
+                    >
+                      Customize Base
+                    </button>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={(e) => addToCart(item, e)} 
+                        className="btn" 
+                        style={{ width: '100%', padding: '0.75rem 0', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--primary)', border: 'none', fontWeight: 700 }}
+                      >
+                        Add to Dish
+                      </button>
+                      <button 
+                        onClick={() => setSelectedProduct(item)} 
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                      >
+                        View Details
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
