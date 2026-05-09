@@ -1,8 +1,15 @@
-import Customer from '../models/Customer.js';
+import { supabase } from '../config/supabase.js';
 
 export const getCustomerByPhone = async (req, res) => {
   try {
-    const customer = await Customer.findOne({ phone: req.params.phone });
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('phone', req.params.phone)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
     if (customer) {
       res.json(customer);
     } else {

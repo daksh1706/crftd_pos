@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -46,14 +45,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Database connection logic
-const MONGO_URI = process.env.MONGO_URI;
-
-if (MONGO_URI) {
-  mongoose.connect(MONGO_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.error('MongoDB connection error:', err));
-}
+// Supabase is used instead of MongoDB. The connection is handled in individual controllers or the config file.
 
 // CRITICAL FIX: Export the app for Vercel
 export default app;

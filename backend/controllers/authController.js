@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import { supabase } from '../config/supabase.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -12,7 +12,12 @@ export const registerUser = async (req, res) => {
   const { username, password, role } = req.body;
 
   try {
-    const userExists = await User.findOne({ username });
+    const { data: userExists } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .single();
+
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -20,18 +25,24 @@ export const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
-      username,
-      password: hashedPassword,
-      role: role || 'Cashier'
-    });
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert({
+        username,
+        password: hashedPassword,
+        role: role || 'Cashier'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     if (user) {
       res.status(201).json({
-        _id: user._id,
+        _id: user.id,
         username: user.username,
         role: user.role,
-        token: generateToken(user._id, user.role),
+        token: generateToken(user.id, user.role),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -45,14 +56,20 @@ export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // Ignore no rows found
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
-        _id: user._id,
+        _id: user.id,
         username: user.username,
         role: user.role,
-        token: generateToken(user._id, user.role),
+        token: generateToken(user.id, user.role),
       });
     } else {
       res.status(401).json({ message: 'Invalid username or password' });

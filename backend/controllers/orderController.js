@@ -1,29 +1,22 @@
-import Order from '../models/Order.js';
-import MenuItem from '../models/MenuItem.js';
-import Ingredient from '../models/Ingredient.js';
-import Customer from '../models/Customer.js';
+import { supabase } from '../config/supabase.js';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_key_replace_me');
 
 const generateInvoiceAndOrderNumber = async () => {
   const date = new Date();
-  
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
-  
   const endOfDay = new Date(date);
   endOfDay.setHours(23, 59, 59, 999);
 
-  const count = await Order.countDocuments({
-    createdAt: {
-      $gte: startOfDay,
-      $lte: endOfDay
-    }
-  });
-  
-  const orderNumber = count + 1;
-  // Format: BILL-YYYYMMDD-0001
+  const { count } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', startOfDay.toISOString())
+    .lte('created_at', endOfDay.toISOString());
+
+  const orderNumber = (count || 0) + 1;
   const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
   
   return { invoiceNumber: `BILL-${dateString}-${orderNumber.toString().padStart(4, '0')}`, orderNumber };
@@ -38,48 +31,49 @@ export const createOrder = async (req, res) => {
 
   try {
     let subtotal = 0;
-    const orderItems = [];
+    const orderItemsData = [];
+    const orderCustomizationsData = [];
+    const stockUpdates = {};
 
-    // Process items and calculate totals
+    // Process items
     for (const item of items) {
-      const menuItem = await MenuItem.findById(item.menuItemId).populate('recipe.ingredient');
-      if (!menuItem) {
+      const { data: menuItem, error: menuErr } = await supabase
+        .from('menu_items')
+        .select('*, recipe:menu_item_recipes(quantity, ingredient:ingredients!ingredient_id(*))')
+        .eq('id', item.menuItemId)
+        .single();
+
+      if (menuErr || !menuItem) {
         return res.status(404).json({ message: `Menu item not found: ${item.menuItemId}` });
       }
 
       let itemSubtotal = menuItem.price * item.quantity;
-      const savedCustomizations = [];
+      let orderItemTempId = Math.random().toString(36).substring(7); // Used locally to link customizations
 
       // Process customizations
       if (item.customizations && item.customizations.length > 0) {
         for (const cust of item.customizations) {
-          const custItem = await MenuItem.findById(cust.menuItemId).populate('recipe.ingredient');
+          const { data: custItem } = await supabase
+            .from('menu_items')
+            .select('*, recipe:menu_item_recipes(quantity, ingredient:ingredients!ingredient_id(*))')
+            .eq('id', cust.menuItemId)
+            .single();
+
           if (custItem) {
             itemSubtotal += custItem.price * item.quantity;
-            savedCustomizations.push({
-              menuItem: custItem._id,
+            orderCustomizationsData.push({
+              _tempItemId: orderItemTempId,
+              menu_item_id: custItem.id,
               name: custItem.name,
               price: custItem.price
             });
 
-            // Deduct Inventory for Customization
             if (custItem.recipe) {
               for (const recipeItem of custItem.recipe) {
                 if (!recipeItem.ingredient) continue;
-                
-                const totalIngredientNeeded = recipeItem.quantity * item.quantity;
-                const ingredient = await Ingredient.findById(recipeItem.ingredient._id);
-                
-                if (ingredient) {
-                  ingredient.currentStock -= totalIngredientNeeded;
-                  await ingredient.save();
-                  if (req.io) {
-                    req.io.emit('inventory_updated', { type: 'update', item: ingredient });
-                    if (ingredient.currentStock <= ingredient.lowStockThreshold) {
-                      req.io.emit('low_stock_alert', { ingredient });
-                    }
-                  }
-                }
+                const totalNeeded = recipeItem.quantity * item.quantity;
+                const ingId = recipeItem.ingredient.id;
+                stockUpdates[ingId] = (stockUpdates[ingId] || recipeItem.ingredient.current_stock) - totalNeeded;
               }
             }
           }
@@ -88,100 +82,151 @@ export const createOrder = async (req, res) => {
 
       subtotal += itemSubtotal;
 
-      orderItems.push({
-        menuItem: menuItem._id,
+      orderItemsData.push({
+        _tempItemId: orderItemTempId,
+        menu_item_id: menuItem.id,
         quantity: item.quantity,
-        priceAtTime: menuItem.price,
-        subtotal: itemSubtotal,
-        customizations: savedCustomizations
+        price_at_time: menuItem.price,
+        subtotal: itemSubtotal
       });
 
-      // Deduct Inventory
       if (menuItem.recipe) {
         for (const recipeItem of menuItem.recipe) {
           if (!recipeItem.ingredient) continue;
-          
-          const totalIngredientNeeded = recipeItem.quantity * item.quantity;
-          const ingredient = await Ingredient.findById(recipeItem.ingredient._id);
-          
-          if (ingredient) {
-            ingredient.currentStock -= totalIngredientNeeded;
-            await ingredient.save();
-            // Emit inventory update
-            if (req.io) {
-              req.io.emit('inventory_updated', { type: 'update', item: ingredient });
-              if (ingredient.currentStock <= ingredient.lowStockThreshold) {
-                req.io.emit('low_stock_alert', { ingredient });
-              }
-            }
-          }
+          const totalNeeded = recipeItem.quantity * item.quantity;
+          const ingId = recipeItem.ingredient.id;
+          stockUpdates[ingId] = (stockUpdates[ingId] || recipeItem.ingredient.current_stock) - totalNeeded;
         }
       }
     }
 
-    const taxAmount = subtotal * 0.05; // 5% GST
+    const taxAmount = subtotal * 0.05;
     const totalAmount = subtotal + taxAmount - discountAmount;
     const { invoiceNumber, orderNumber } = await generateInvoiceAndOrderNumber();
 
-    // Handle Customer CRM logic
+    // Customer logic
     let customerId = null;
     let customerDetails = null;
     if (customerPhone && customerName) {
-      let customer = await Customer.findOne({ phone: customerPhone });
-      if (customer) {
-        customer.name = customerName; // update name if changed
-        customer.totalOrders += 1;
-        customer.totalSpent += totalAmount;
-        await customer.save();
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('phone', customerPhone)
+        .single();
+
+      if (existingCustomer) {
+        const { data: updatedCustomer } = await supabase
+          .from('customers')
+          .update({
+            name: customerName,
+            total_orders: existingCustomer.total_orders + 1,
+            total_spent: existingCustomer.total_spent + totalAmount
+          })
+          .eq('id', existingCustomer.id)
+          .select()
+          .single();
+        customerId = updatedCustomer.id;
+        customerDetails = updatedCustomer;
       } else {
-        customer = new Customer({
-          phone: customerPhone,
-          name: customerName,
-          totalOrders: 1,
-          totalSpent: totalAmount
-        });
-        await customer.save();
+        const { data: newCustomer } = await supabase
+          .from('customers')
+          .insert({
+            phone: customerPhone,
+            name: customerName,
+            total_orders: 1,
+            total_spent: totalAmount
+          })
+          .select()
+          .single();
+        customerId = newCustomer.id;
+        customerDetails = newCustomer;
       }
-      customerId = customer._id;
-      customerDetails = customer;
     }
 
-    const order = new Order({
-      invoiceNumber,
-      orderNumber,
-      items: orderItems,
-      subtotal,
-      taxAmount,
-      discountAmount,
-      totalAmount,
-      paymentMethod,
-      cashGiven: cashGiven || 0,
-      changeDue: changeDue || 0,
-      customer: customerId,
-      cashier: req.user ? req.user.id : null,
-      status: isCheckoutSession ? 'Pending Payment' : 'Preparing'
-    });
+    // Insert Order
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .insert({
+        invoice_number: invoiceNumber,
+        order_number: orderNumber,
+        subtotal,
+        tax_amount: taxAmount,
+        discount_amount: discountAmount,
+        total_amount: totalAmount,
+        payment_method: paymentMethod,
+        cash_given: cashGiven || 0,
+        change_due: changeDue || 0,
+        customer_id: customerId,
+        cashier_id: req.user ? req.user.id : null,
+        status: isCheckoutSession ? 'Pending Payment' : 'Preparing'
+      })
+      .select()
+      .single();
 
-    const createdOrder = await order.save();
-    
-    // Populate for receipt
-    const populatedOrder = await Order.findById(createdOrder._id)
-      .populate('items.menuItem')
-      .populate('customer')
-      .populate('cashier', 'username');
+    if (orderErr) throw orderErr;
+
+    // Insert Order Items
+    for (const oi of orderItemsData) {
+      const { data: insertedItem } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: order.id,
+          menu_item_id: oi.menu_item_id,
+          quantity: oi.quantity,
+          price_at_time: oi.price_at_time,
+          subtotal: oi.subtotal
+        })
+        .select()
+        .single();
+
+      // Insert matching customizations
+      const itemCustomizations = orderCustomizationsData.filter(c => c._tempItemId === oi._tempItemId);
+      if (itemCustomizations.length > 0) {
+        await supabase.from('order_item_customizations').insert(
+          itemCustomizations.map(c => ({
+            order_item_id: insertedItem.id,
+            menu_item_id: c.menu_item_id,
+            name: c.name,
+            price: c.price
+          }))
+        );
+      }
+    }
+
+    // Apply inventory deducts
+    for (const [ingId, newStock] of Object.entries(stockUpdates)) {
+      const { data: updatedIng } = await supabase
+        .from('ingredients')
+        .update({ current_stock: newStock })
+        .eq('id', ingId)
+        .select()
+        .single();
+      
+      if (req.io && updatedIng) {
+        req.io.emit('inventory_updated', { type: 'update', item: { _id: updatedIng.id, name: updatedIng.name, currentStock: updatedIng.current_stock } });
+      }
+    }
+
+    // Format response to match old schema
+    const { data: populatedOrder } = await supabase
+      .from('orders')
+      .select('*, customer:customers(*), cashier:users(username), items:order_items(*, menuItem:menu_items(*), customizations:order_item_customizations(*))')
+      .eq('id', order.id)
+      .single();
+
+    const responseData = {
+      ...populatedOrder,
+      _id: populatedOrder.id,
+      customerDetails
+    };
 
     if (req.io) {
-      req.io.emit('order_created', populatedOrder);
+      req.io.emit('order_created', responseData);
     }
-
-    // Include customer details directly in response for the receipt generator
-    const responseData = populatedOrder.toObject();
-    responseData.customerDetails = customerDetails;
 
     if (isCheckoutSession) {
       if (!process.env.STRIPE_SECRET_KEY) {
-        console.warn("Stripe key missing - redirecting directly to success for testing");
-        return res.json({ url: `${req.headers.origin}/payment-success?order_id=${createdOrder._id}` });
+        return res.json({ url: `${req.headers.origin}/payment-success?order_id=${order.id}` });
       }
 
       const session = await stripe.checkout.sessions.create({
@@ -195,8 +240,8 @@ export const createOrder = async (req, res) => {
           quantity: 1,
         }],
         mode: 'payment',
-        client_reference_id: createdOrder._id.toString(),
-        success_url: `${req.headers.origin}/payment-success?order_id=${createdOrder._id}`,
+        client_reference_id: order.id,
+        success_url: `${req.headers.origin}/payment-success?order_id=${order.id}`,
         cancel_url: `${req.headers.origin}/`,
       });
       return res.json({ url: session.url });
@@ -212,12 +257,16 @@ export const createOrder = async (req, res) => {
 
 export const getOrders = async (req, res) => {
   try {
-    const orders = await Order.find({})
-      .populate('items.menuItem')
-      .populate('customer')
-      .populate('cashier', 'username')
-      .sort('-createdAt');
-    res.json(orders);
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*, customer:customers(*), cashier:users(username), items:order_items(*, menuItem:menu_items(*), customizations:order_item_customizations(*))')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    // Quick format for frontend compatibility
+    const formatted = orders.map(o => ({...o, _id: o.id, createdAt: o.created_at}));
+    res.json(formatted);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -226,22 +275,20 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id)
-      .populate('items.menuItem')
-      .populate('customer');
+    const { data: order, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', req.params.id)
+      .select('*, customer:customers(*), cashier:users(username), items:order_items(*, menuItem:menu_items(*), customizations:order_item_customizations(*))')
+      .single();
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (error) throw error;
 
-    order.status = status;
-    const updatedOrder = await order.save();
-
+    const formatted = {...order, _id: order.id, createdAt: order.created_at};
     if (req.io) {
-      req.io.emit('order_status_updated', updatedOrder);
+      req.io.emit('order_status_updated', formatted);
     }
-
-    res.json(updatedOrder);
+    res.json(formatted);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -251,58 +298,54 @@ export const createPaymentIntent = async (req, res) => {
   const { amount } = req.body;
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.warn("Stripe key missing - returning mock payment intent");
       return res.json({ clientSecret: 'pi_mock_secret_for_testing' });
     }
-
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), 
       currency: 'inr',
       payment_method_types: ['upi'],
     });
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-    });
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error('Stripe error:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
 export const createCheckoutSession = async (req, res) => {
-  // We handle checkout sessions directly in createOrder by passing isCheckoutSession
   res.status(400).json({ message: 'Use createOrder with isCheckoutSession flag' });
 };
 
 export const confirmStripePayment = async (req, res) => {
   try {
     const { order_id } = req.body;
-    const order = await Order.findById(order_id)
-      .populate('items.menuItem')
-      .populate('customer');
+    
+    const { data: checkOrder } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', order_id)
+      .single();
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (!checkOrder) return res.status(404).json({ message: 'Order not found' });
 
-    if (order.status === 'Pending Payment') {
-      order.status = 'Completed';
-      await order.save();
+    let finalOrder = checkOrder;
+
+    if (checkOrder.status === 'Pending Payment') {
+      const { data: updated } = await supabase
+        .from('orders')
+        .update({ status: 'Completed' })
+        .eq('id', order_id)
+        .select('*, customer:customers(*), cashier:users(username), items:order_items(*, menuItem:menu_items(*), customizations:order_item_customizations(*))')
+        .single();
+      
+      finalOrder = updated;
       
       if (req.io) {
-        req.io.emit('order_status_updated', order);
+        req.io.emit('order_status_updated', {...updated, _id: updated.id});
       }
     }
 
-    const responseData = order.toObject();
-    if (order.customer) {
-      responseData.customerDetails = order.customer;
-    }
-
-    res.json(responseData);
+    res.json({...finalOrder, _id: finalOrder.id, customerDetails: finalOrder.customer});
   } catch (error) {
-    console.error('Confirmation error:', error);
     res.status(500).json({ message: error.message });
   }
 };
