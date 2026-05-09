@@ -655,7 +655,7 @@ const POS = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            {['Cash', 'Card', 'Stripe'].map(method => (
+            {['Cash', 'Card', 'UPI', 'Stripe'].map(method => (
               <button 
                 key={method}
                 onClick={() => setPaymentMethod(method)}
@@ -672,7 +672,7 @@ const POS = () => {
                   transition: 'var(--transition)'
                 }}
               >
-                {method === 'Stripe' ? 'QR Code' : method}
+                {method === 'Stripe' ? 'Online Payment' : method}
               </button>
             ))}
           </div>
@@ -845,6 +845,21 @@ const POS = () => {
                 </div>
               )}
 
+              {paymentMethod === 'UPI' && (
+                <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '1rem', border: '1px solid var(--border)', marginBottom: '1rem' }}>
+                    {/* Placeholder UPI ID. Change 'crftd@upi' to your real business UPI ID */}
+                    <QRCodeSVG 
+                      value={`upi://pay?pa=crftd@upi&pn=CRFTD&am=${total.toFixed(2)}&cu=INR`} 
+                      size={180}
+                      level="H"
+                    />
+                  </div>
+                  <h3 style={{ margin: '0 0 0.5rem 0' }}>Scan to Pay ₹{total.toFixed(2)}</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Use any UPI app (GPay, PhonePe, Paytm)</p>
+                </div>
+              )}
+
               {paymentMethod === 'Stripe' && (
                 <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <Smartphone size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
@@ -862,7 +877,8 @@ const POS = () => {
                     {isProcessing ? 'Processing...' : (
                       paymentMethod === 'Card' && !cardAwaiting ? 'Initiate Card Payment' :
                       paymentMethod === 'Card' && cardAwaiting ? 'Confirm Terminal Success' :
-                      paymentMethod === 'Stripe' ? 'Proceed to Stripe Payment' :
+                      paymentMethod === 'UPI' ? 'Verify UPI Payment' :
+                      paymentMethod === 'Stripe' ? 'Proceed to Online Checkout' :
                       'Complete Payment'
                     )}
                  </button>
