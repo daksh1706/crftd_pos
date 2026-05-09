@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const POS = () => {
   const [menuItems, setMenuItems] = useState([]);
-  const [activeTab, setActiveTab] = useState('Signature');
+  const [activeTab, setActiveTab] = useState('All Items');
   const [cart, setCart] = useState([]);
   const [discountPercent, setDiscountPercent] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Stripe');
@@ -30,6 +30,9 @@ const POS = () => {
 
   // Customization State
   const [selectedCustomizations, setSelectedCustomizations] = useState([]);
+  
+  // Payment variables missing state
+  const [cashGiven, setCashGiven] = useState('');
 
   useEffect(() => {
     fetchMenu();
@@ -453,58 +456,71 @@ const POS = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-          <button 
-            onClick={() => setActiveTab('Signature')}
-            style={{ 
-              background: activeTab === 'Signature' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
-              color: activeTab === 'Signature' ? 'var(--primary)' : 'var(--text-main)', 
-              border: '1px solid',
-              borderColor: activeTab === 'Signature' ? 'var(--primary)' : 'var(--border)', 
-              padding: '1rem 1.5rem', 
-              borderRadius: 'var(--radius-lg)', 
-              cursor: 'pointer', 
-              fontWeight: 600, 
-              fontSize: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              minWidth: '120px',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <ChefHat size={24} />
-            Signature
-          </button>
-          <button 
-            onClick={() => setActiveTab('Customization')}
-            style={{ 
-              background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
-              color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
-              border: '1px solid',
-              borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
-              padding: '1rem 1.5rem', 
-              borderRadius: 'var(--radius-lg)', 
-              cursor: 'pointer', 
-              fontWeight: 600, 
-              fontSize: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              minWidth: '120px',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <Plus size={24} />
-            Build Your Own
-          </button>
+          {['All Items', ...new Set(menuItems.filter(i => !i.isCustomization).map(i => i.category))].map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setActiveTab(cat)}
+              style={{ 
+                background: activeTab === cat ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
+                color: activeTab === cat ? 'var(--primary)' : 'var(--text-main)', 
+                border: '1px solid',
+                borderColor: activeTab === cat ? 'var(--primary)' : 'var(--border)', 
+                padding: '1rem 1.5rem', 
+                borderRadius: 'var(--radius-lg)', 
+                cursor: 'pointer', 
+                fontWeight: 600, 
+                fontSize: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: '120px',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <ChefHat size={24} />
+              {cat}
+            </button>
+          ))}
+          {menuItems.some(i => i.isCustomization) && (
+            <button 
+              onClick={() => setActiveTab('Customization')}
+              style={{ 
+                background: activeTab === 'Customization' ? 'rgba(16, 185, 129, 0.15)' : '#ffffff', 
+                color: activeTab === 'Customization' ? 'var(--primary)' : 'var(--text-main)', 
+                border: '1px solid',
+                borderColor: activeTab === 'Customization' ? 'var(--primary)' : 'var(--border)', 
+                padding: '1rem 1.5rem', 
+                borderRadius: 'var(--radius-lg)', 
+                cursor: 'pointer', 
+                fontWeight: 600, 
+                fontSize: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: '120px',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <Plus size={24} />
+              Build Your Own
+            </button>
+          )}
         </div>
         
         <div className="pos-grid">
-          {menuItems.filter(item => activeTab === 'Signature' ? !item.isCustomization : (item.isCustomization && item.customizationType === 'Base')).length === 0 ? (
+          {menuItems.filter(item => {
+            if (activeTab === 'Customization') return item.isCustomization && item.customizationType === 'Base';
+            if (activeTab === 'All Items') return !item.isCustomization;
+            return !item.isCustomization && item.category === activeTab;
+          }).length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No items found in this category.</p>
-          ) : menuItems.filter(item => activeTab === 'Signature' ? !item.isCustomization : (item.isCustomization && item.customizationType === 'Base')).map(item => (
+          ) : menuItems.filter(item => {
+            if (activeTab === 'Customization') return item.isCustomization && item.customizationType === 'Base';
+            if (activeTab === 'All Items') return !item.isCustomization;
+            return !item.isCustomization && item.category === activeTab;
+          }).map(item => (
             <div 
               key={item._id} 
               className="pos-item-card animate-slide-up" 
