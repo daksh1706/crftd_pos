@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Search, User, CreditCard, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Search, User, CreditCard, Calendar, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 
 const OrderLedger = () => {
   const [orders, setOrders] = useState([]);
@@ -22,6 +23,201 @@ const OrderLedger = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const generateReceiptDoc = (order) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [80, 280]
+    });
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(8); 
+    
+    let y = 10;
+    const marginLeft = 4;
+    
+    const doubleLine = "==========================================";
+    const singleLine = "------------------------------------------";
+
+    doc.setFontSize(12);
+    doc.setFont('courier', 'bold');
+    doc.text("          KITCHEN TOKEN", marginLeft, y);
+    y += 5;
+    doc.setFontSize(10);
+    doc.text("              CRFTD", marginLeft, y);
+    y += 6;
+    
+    doc.setFontSize(14);
+    const orderNo = order.orderNumber || order.invoiceNumber.split('-')[1] || 'N/A';
+    doc.text(`      Order No: ${orderNo}`, marginLeft, y);
+    doc.setFontSize(8);
+    doc.setFont('courier', 'normal');
+    y += 6;
+    
+    const cNameToken = order.customer?.name || 'Walk-in';
+    const cPhoneToken = order.customer?.phone || '';
+    doc.text(`Name : ${cNameToken}`, marginLeft, y);
+    y += 4;
+    if (cPhoneToken) {
+      doc.text(`Phone: +91 ${cPhoneToken}`, marginLeft, y);
+      y += 4;
+    }
+    const timeStrToken = new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute:'2-digit' });
+    doc.text(`Time : ${timeStrToken}`, marginLeft, y);
+    y += 4;
+
+    doc.text(singleLine, marginLeft, y);
+    y += 4;
+    
+    doc.setFont('courier', 'bold');
+    doc.text("QTY   ITEM", marginLeft, y);
+    doc.setFont('courier', 'normal');
+    y += 4;
+    doc.text(singleLine, marginLeft, y);
+    y += 4;
+
+    order.items.forEach(item => {
+      const qtyStr = item.quantity.toString().padEnd(5, ' ');
+      const itemName = item.menuItem?.name || 'Item';
+      doc.text(`${qtyStr} ${itemName.substring(0, 35)}`, marginLeft, y);
+      y += 4;
+      if (item.customizations && item.customizations.length > 0) {
+        doc.setFontSize(7);
+        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const splitText = doc.splitTextToSize(customText, 70);
+        splitText.forEach(line => {
+          doc.text(line, marginLeft, y);
+          y += 3;
+        });
+        doc.setFontSize(8);
+      }
+    });
+
+    y += 2;
+    doc.text("- - - - - - - - CUT HERE - - - - - - - - -", marginLeft, y);
+    y += 8;
+
+    doc.text(doubleLine, marginLeft, y);
+    y += 4;
+    
+    doc.setFontSize(10);
+    doc.text("         BILLING SYSTEM POS", marginLeft, y);
+    doc.setFontSize(8);
+    y += 4;
+    
+    doc.text(doubleLine, marginLeft, y);
+    y += 4;
+
+    const padR = (str, len) => str.toString().padEnd(len, ' ');
+    const padL = (str, len) => str.toString().padStart(len, ' ');
+
+    const dateStr = new Date(order.createdAt).toLocaleString('en-IN', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).replace(',', '');
+
+    doc.text(`Bill No   : ${order.invoiceNumber}`, marginLeft, y);
+    y += 4;
+    doc.text(`Order No  : ${orderNo}`, marginLeft, y);
+    y += 4;
+    doc.text(`Date      : ${dateStr}`, marginLeft, y);
+    y += 4;
+    const cName = order.customer?.name || 'Walk-in Customer';
+    doc.text(`Customer  : ${cName}`, marginLeft, y);
+    y += 4;
+
+    doc.text(singleLine, marginLeft, y);
+    y += 4;
+
+    doc.text("Item                    Qty  Price   Total", marginLeft, y);
+    y += 4;
+    doc.text(singleLine, marginLeft, y);
+    y += 4;
+
+    order.items.forEach(item => {
+      let itemName = item.menuItem?.name || 'Item';
+      if (itemName.length > 21) {
+        itemName = itemName.substring(0, 20) + '.';
+      }
+      
+      const col1 = padR(itemName, 22);
+      const col2 = padL(item.quantity.toString(), 5);
+      const col3 = padL((item.priceAtTime || 0).toFixed(2), 7);
+      const col4 = padL((item.subtotal || 0).toFixed(2), 8);
+      
+      doc.text(`${col1}${col2}${col3}${col4}`, marginLeft, y);
+      y += 4;
+
+      if (item.customizations && item.customizations.length > 0) {
+        doc.setFontSize(7);
+        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const splitText = doc.splitTextToSize(customText, 40); 
+        splitText.forEach(line => {
+          doc.text(line, marginLeft, y);
+          y += 3;
+        });
+        doc.setFontSize(8);
+      }
+    });
+
+    doc.text(singleLine, marginLeft, y);
+    y += 4;
+
+    const subtotalStr = (order.subtotal || 0).toFixed(2);
+    doc.text(`Subtotal:                        ${padL(subtotalStr, 8)}`, marginLeft, y);
+    y += 4;
+    
+    if (order.discountAmount > 0) {
+      const discountStr = order.discountAmount.toFixed(2);
+      doc.text(`Discount:                       -${padL(discountStr, 8)}`, marginLeft, y);
+      y += 4;
+    }
+
+    const gstStr = (order.taxAmount || 0).toFixed(2);
+    doc.text(`GST (5%):                        ${padL(gstStr, 8)}`, marginLeft, y);
+    y += 4;
+
+    doc.text(doubleLine, marginLeft, y);
+    y += 4;
+
+    doc.setFont('courier', 'bold');
+    const totalStr = (order.totalAmount || 0).toFixed(2);
+    doc.text(`TOTAL (Rs.):                     ${padL(totalStr, 8)}`, marginLeft, y);
+    doc.setFont('courier', 'normal');
+    y += 4;
+
+    if (order.paymentMethod === 'Cash' && order.cashGiven) {
+      y += 2;
+      const cashStr = order.cashGiven.toFixed(2);
+      const changeStr = (order.changeDue || 0).toFixed(2);
+      doc.text(`Cash Given:                      ${padL(cashStr, 8)}`, marginLeft, y);
+      y += 4;
+      doc.text(`Change Due:                      ${padL(changeStr, 8)}`, marginLeft, y);
+      y += 4;
+    }
+
+    doc.text(doubleLine, marginLeft, y);
+    y += 6;
+
+    doc.text("      Thank you! Please visit again.", marginLeft, y);
+    y += 4;
+    doc.text(doubleLine, marginLeft, y);
+
+    return doc;
+  };
+
+  const handleDownloadReceipt = (order) => {
+    try {
+      const doc = generateReceiptDoc(order);
+      if (doc) {
+        doc.save(`${order.invoiceNumber}.pdf`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("PDF Error: " + err.message);
     }
   };
 
@@ -200,7 +396,16 @@ const OrderLedger = () => {
                         
                         {/* Bill Breakdown */}
                         <div style={{ flex: 1, backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                          <h4 style={{ marginBottom: '1rem', color: 'var(--text-main)', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Bill Summary</h4>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                            <h4 style={{ color: 'var(--text-main)', margin: 0 }}>Bill Summary</h4>
+                            <button 
+                              onClick={() => handleDownloadReceipt(order)}
+                              className="btn btn-secondary"
+                              style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+                            >
+                              <Download size={14} /> Download Bill
+                            </button>
+                          </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.95rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                               <span>Subtotal</span>
