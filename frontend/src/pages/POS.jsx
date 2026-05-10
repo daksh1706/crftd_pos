@@ -978,7 +978,7 @@ const POSInner = () => {
                   <span style={{ fontSize: '0.8rem', color: 'var(--primary)', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
                 </div>
                 <span style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                  ₹{(selectedProduct.price + selectedCustomizations.reduce((sum, c) => sum + c.price, 0)).toFixed(2)}
+                  ₹{selectedProduct.price.toFixed(2)}
                 </span>
               </div>
               
@@ -1006,35 +1006,7 @@ const POSInner = () => {
                 </div>
               </div>
 
-              {/* Customizations */}
-              <div style={{ marginBottom: '2rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                {Object.entries(groupedCustomizations).map(([category, options]) => options.length > 0 && (
-                  <div key={category} style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'capitalize' }}>{category}</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {options.map(opt => {
-                        const isSelected = selectedCustomizations.some(c => c._id === opt._id);
-                        return (
-                          <button
-                            key={opt._id}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedCustomizations(prev => prev.filter(c => c._id !== opt._id));
-                              } else {
-                                setSelectedCustomizations(prev => [...prev, opt]);
-                              }
-                            }}
-                            className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                          >
-                            {opt.name} (+₹{opt.price})
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+
 
               <button className="btn btn-primary" style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem' }} onClick={(e) => addToCart(selectedProduct, e)}>
                 <Plus size={20} /> Add to Cart
