@@ -902,7 +902,7 @@ const POSInner = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem 0' }}>{selectedProduct.name}</h2>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--primary)', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontWeight: 600 }}>{selectedProduct.category || selectedProduct.customizationType}</span>
                 </div>
                 <span style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 'bold' }}>
                   ₹{(selectedProduct.price + selectedCustomizations.reduce((sum, c) => sum + c.price, 0)).toFixed(2)}

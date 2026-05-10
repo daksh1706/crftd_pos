@@ -210,7 +210,7 @@ const MenuManager = () => {
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-main)', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                       {item.isCustomization ? `${item.customizationType}` : item.category}
                     </span>
                     <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.1rem' }}>₹{item.price}</span>
