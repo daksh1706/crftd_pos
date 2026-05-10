@@ -131,7 +131,7 @@ export const createOrder = async (req, res) => {
         }
         newLoyaltyPoints += pointsToGrant;
 
-        const { data: updatedCustomer } = await supabase
+        let { data: updatedCustomer, error: updateErr } = await supabase
           .from('customers')
           .update({
             name: customerName,
@@ -142,10 +142,29 @@ export const createOrder = async (req, res) => {
           .eq('id', existingCustomer.id)
           .select()
           .single();
-        customerId = updatedCustomer.id;
-        customerDetails = updatedCustomer;
+
+        if (updateErr) {
+          console.error("Customer update failed (possibly missing loyalty_points column):", updateErr);
+          // Fallback without loyalty_points
+          const { data: fallbackCustomer } = await supabase
+            .from('customers')
+            .update({
+              name: customerName,
+              total_orders: existingCustomer.total_orders + 1,
+              total_spent: existingCustomer.total_spent + totalAmount
+            })
+            .eq('id', existingCustomer.id)
+            .select()
+            .single();
+          updatedCustomer = fallbackCustomer;
+        }
+
+        if (updatedCustomer) {
+          customerId = updatedCustomer.id;
+          customerDetails = updatedCustomer;
+        }
       } else {
-        const { data: newCustomer } = await supabase
+        let { data: newCustomer, error: insertErr } = await supabase
           .from('customers')
           .insert({
             phone: customerPhone,
@@ -156,8 +175,27 @@ export const createOrder = async (req, res) => {
           })
           .select()
           .single();
-        customerId = newCustomer.id;
-        customerDetails = newCustomer;
+
+        if (insertErr) {
+          console.error("Customer insert failed (possibly missing loyalty_points column):", insertErr);
+          // Fallback without loyalty_points
+          const { data: fallbackCustomer } = await supabase
+            .from('customers')
+            .insert({
+              phone: customerPhone,
+              name: customerName,
+              total_orders: 1,
+              total_spent: totalAmount
+            })
+            .select()
+            .single();
+          newCustomer = fallbackCustomer;
+        }
+
+        if (newCustomer) {
+          customerId = newCustomer.id;
+          customerDetails = newCustomer;
+        }
       }
     }
 
