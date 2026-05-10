@@ -17,6 +17,7 @@ CREATE TABLE customers (
   name TEXT NOT NULL,
   total_orders INTEGER DEFAULT 0,
   total_spent NUMERIC DEFAULT 0.0,
+  loyalty_points INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -101,3 +102,20 @@ CREATE TABLE order_item_customizations (
   name TEXT,
   price NUMERIC
 );
+
+-- 10. Loyalty Settings Table (singleton row, id = 1)
+CREATE TABLE loyalty_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  points_per_order INTEGER DEFAULT 1,
+  threshold_points INTEGER DEFAULT 10,
+  reward_type TEXT DEFAULT 'discount' CHECK (reward_type IN ('discount', 'freeItem')),
+  reward_value TEXT DEFAULT '10',
+  reward_item_id UUID REFERENCES menu_items(id) ON DELETE SET NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- Insert the default loyalty settings row
+INSERT INTO loyalty_settings (id, points_per_order, threshold_points, reward_type, reward_value)
+VALUES (1, 1, 10, 'discount', '10')
+ON CONFLICT (id) DO NOTHING;

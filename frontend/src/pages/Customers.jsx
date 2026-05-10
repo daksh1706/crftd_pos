@@ -16,8 +16,9 @@ const Customers = () => {
   const [loyaltySettings, setLoyaltySettings] = useState({
     pointsPerOrder: 1,
     thresholdPoints: 10,
-    rewardType: 'discount', // 'discount' or 'free_dish'
-    rewardValue: 50 // discount % or free dish ID/name
+    rewardType: 'discount', // 'discount' or 'freeItem'
+    rewardValue: '10',      // discount % OR free dish name (for display)
+    rewardItemId: ''        // free dish UUID (for freeItem type)
   });
 
   useEffect(() => {
@@ -66,7 +67,13 @@ const Customers = () => {
       if (res.ok) {
         const data = await res.json();
         if (data && Object.keys(data).length > 0) {
-          setLoyaltySettings(data);
+          setLoyaltySettings({
+            pointsPerOrder: data.pointsPerOrder ?? 1,
+            thresholdPoints: data.thresholdPoints ?? 10,
+            rewardType: data.rewardType ?? 'discount',
+            rewardValue: data.rewardValue ?? '10',
+            rewardItemId: data.rewardItemId ?? ''
+          });
         }
       }
     } catch (err) {
@@ -83,10 +90,13 @@ const Customers = () => {
         body: JSON.stringify(loyaltySettings)
       });
       if (res.ok) {
+        const saved = await res.json();
+        setLoyaltySettings(prev => ({ ...prev, ...saved }));
         alert('Loyalty settings saved successfully!');
         setIsSettingsModalOpen(false);
       } else {
-        alert('Failed to save settings');
+        const err = await res.json();
+        alert('Failed to save settings: ' + (err.message || 'Unknown error'));
       }
     } catch (err) {
       console.error('Failed to save loyalty settings', err);
@@ -276,11 +286,11 @@ const Customers = () => {
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Reward Type</label>
                 <select 
                   value={loyaltySettings.rewardType} 
-                  onChange={e => setLoyaltySettings({...loyaltySettings, rewardType: e.target.value})}
+                  onChange={e => setLoyaltySettings({...loyaltySettings, rewardType: e.target.value, rewardValue: '', rewardItemId: ''})}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 >
                   <option value="discount">Percentage Discount</option>
-                  <option value="free_dish">Free Dish</option>
+                  <option value="freeItem">Free Dish</option>
                 </select>
               </div>
 
@@ -292,7 +302,7 @@ const Customers = () => {
                     required 
                     min="1" max="100"
                     value={loyaltySettings.rewardValue} 
-                    onChange={e => setLoyaltySettings({...loyaltySettings, rewardValue: Number(e.target.value)})} 
+                    onChange={e => setLoyaltySettings({...loyaltySettings, rewardValue: String(e.target.value)})} 
                   />
                 </div>
               ) : (
@@ -300,15 +310,32 @@ const Customers = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Select Free Dish</label>
                   <select 
                     required 
-                    value={loyaltySettings.rewardValue} 
-                    onChange={e => setLoyaltySettings({...loyaltySettings, rewardValue: e.target.value})}
+                    value={loyaltySettings.rewardItemId} 
+                    onChange={e => {
+                      const selected = menuItems.find(m => (m._id || m.id) === e.target.value);
+                      setLoyaltySettings({
+                        ...loyaltySettings, 
+                        rewardItemId: e.target.value,
+                        rewardValue: selected ? selected.name : ''
+                      });
+                    }}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                   >
                     <option value="" disabled>Select a dish...</option>
-                    {menuItems.filter(item => !item.isCustomization).map(item => (
-                      <option key={item._id} value={item.name}>{item.name}</option>
-                    ))}
+                    {menuItems
+                      .filter(item => !item.isCustomization && !item.is_customization && item.isAvailable !== false)
+                      .map(item => (
+                        <option key={item._id || item.id} value={item._id || item.id}>
+                          {item.name} — ₹{item.price}
+                        </option>
+                      ))
+                    }
                   </select>
+                  {loyaltySettings.rewardItemId && loyaltySettings.rewardValue && (
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--primary)' }}>
+                      ✓ Free dish set to: <strong>{loyaltySettings.rewardValue}</strong>
+                    </p>
+                  )}
                 </div>
               )}
 
