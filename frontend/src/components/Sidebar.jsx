@@ -52,11 +52,6 @@ const Sidebar = ({ setAuth, role }) => {
           <NavItem to="/menu" icon={<MenuSquare size={20} />} label="Menu & Recipes" />
           <NavItem to="/reports" icon={<BarChart3 size={20} />} label="Analytics" />
           <NavItem to="/ledger" icon={<BookOpen size={20} />} label="Order Ledger" />
-          
-          {role === 'Admin' && (
-            <NavItem to="/access-requests" icon={<Shield size={20} />} label="Access Requests" />
-          )}
-
           <NavItem to="/settings" icon={<SettingsIcon size={20} />} label="Settings" />
         </nav>
 
