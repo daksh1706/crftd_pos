@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
-import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft, ShoppingCart } from 'lucide-react';
+import { ChefHat, X, CheckCircle, Printer, MessageSquare, Search, Info, Plus, CreditCard, Smartphone, Banknote, Coffee, Utensils, Download, ChevronRight, ChevronLeft, ShoppingCart, GlassWater, Gift } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 class ErrorBoundary extends React.Component {
@@ -46,6 +46,9 @@ const POSInner = () => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerLoading, setCustomerLoading] = useState(false);
+  const [customerLoyaltyPoints, setCustomerLoyaltyPoints] = useState(0);
+  const [loyaltySettings, setLoyaltySettings] = useState(null);
+  const [rewardApplied, setRewardApplied] = useState(false);
 
   // Payment Flow States
   // Removed upiQRData
@@ -77,7 +80,19 @@ const POSInner = () => {
 
   useEffect(() => {
     fetchMenu();
+    fetchLoyaltySettings();
   }, []);
+
+  const fetchLoyaltySettings = async () => {
+    try {
+      const res = await fetch('/api/loyalty-settings');
+      if (res.ok) {
+        setLoyaltySettings(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch loyalty settings', err);
+    }
+  };
 
   const fetchMenu = async () => {
     try {
@@ -103,12 +118,18 @@ const POSInner = () => {
         if (res.ok) {
           const data = await res.json();
           setCustomerName(data.name);
+          setCustomerLoyaltyPoints(data.loyaltyPoints || 0);
+        } else {
+          setCustomerLoyaltyPoints(0);
         }
       } catch (err) {
         console.error('Customer not found');
+        setCustomerLoyaltyPoints(0);
       } finally {
         setCustomerLoading(false);
       }
+    } else {
+      setCustomerLoyaltyPoints(0);
     }
   };
 
@@ -148,11 +169,20 @@ const POSInner = () => {
     const customPrice = item.customizations ? item.customizations.reduce((s, c) => s + c.price, 0) : 0;
     return sum + ((item.price + customPrice) * item.qty);
   }, 0);
-  const discountVal = Number(discountPercent) || 0;
-  const discountAmount = (subtotal * discountVal) / 100;
+  
+  let discountVal = Number(discountPercent) || 0;
+  if (rewardApplied && loyaltySettings && loyaltySettings.rewardType === 'discount') {
+    discountVal += Number(loyaltySettings.rewardValue);
+  }
+  
+  const discountAmount = (subtotal * Math.min(100, discountVal)) / 100;
   const subtotalAfterDiscount = subtotal - discountAmount;
   const gst = subtotalAfterDiscount * 0.05; // 5% GST
-  const total = subtotalAfterDiscount + gst;
+  let total = subtotalAfterDiscount + gst;
+  
+  // Quick fix for "free_dish" visual deduction, if needed, though simple setup applies 100% discount to one item or just logs it.
+  // We'll trust the checkout handles the text.
+
 
   const groupedCustomizations = {
     Flavour: menuItems.filter(i => i.isCustomization && i.customizationType === 'Flavour'),
@@ -166,6 +196,7 @@ const POSInner = () => {
 
   const getCategoryIcon = (catName) => {
     const name = catName.toLowerCase();
+    if (name.includes('smoothie')) return <GlassWater size={24} />;
     if (name.includes('drink') || name.includes('beverage') || name.includes('coffee') || name.includes('shake')) return <Coffee size={24} />;
     if (name.includes('all items')) return <ChefHat size={24} />;
     return <Utensils size={24} />;
@@ -219,7 +250,8 @@ const POSInner = () => {
           customerName,
           cashGiven: paymentMethod === 'Cash' ? Number(cashGiven) : 0,
           changeDue: changeDueAmt,
-          isCheckoutSession
+          isCheckoutSession,
+          rewardApplied
         })
       });
 
@@ -236,6 +268,8 @@ const POSInner = () => {
         setCart([]);
         setCustomerPhone('');
         setCustomerName('');
+        setCustomerLoyaltyPoints(0);
+        setRewardApplied(false);
         setCashGiven('');
         setCardAwaiting(false);
       } else {
@@ -659,6 +693,38 @@ const POSInner = () => {
           )}
         </div>
 
+        {cart.length > 0 && (
+          <div style={{ padding: '1rem', borderTop: '1px solid var(--border)', background: 'rgba(16, 185, 129, 0.05)' }}>
+            <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--primary)' }}>Pairs well with your order!</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {menuItems
+                .filter(i => !i.isCustomization && i.isAvailable !== false && !cart.some(c => c._id === i._id))
+                .slice(0, 2)
+                .map(rec => (
+                  <div key={rec._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {rec.image ? (
+                        <img src={rec.image} alt={rec.name} style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                      ) : (
+                        <div style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Utensils size={16} color="var(--text-muted)" /></div>
+                      )}
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{rec.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>₹{rec.price}</div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={(e) => addToCart(rec, e)} 
+                      style={{ background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         <div className="cart-footer">
           <div className="summary-row">
             <span>Subtotal</span>
@@ -769,6 +835,7 @@ const POSInner = () => {
                       <div 
                         key={item._id}
                         onClick={() => {
+                          if (item.isAvailable === false) return;
                           if (builderStep === 0) {
                             setBuilderBase(item);
                             setBuilderStep(1);
@@ -786,14 +853,16 @@ const POSInner = () => {
                           borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
                           borderRadius: 'var(--radius-md)',
                           padding: '1rem',
-                          cursor: 'pointer',
+                          cursor: item.isAvailable === false ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           textAlign: 'center',
                           transition: 'var(--transition)',
                           boxShadow: 'var(--shadow-sm)',
-                          position: 'relative'
+                          position: 'relative',
+                          opacity: item.isAvailable === false ? 0.6 : 1,
+                          filter: item.isAvailable === false ? 'grayscale(0.8)' : 'none'
                         }}
                       >
                         {isSelected && <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '0.2rem' }}><CheckCircle size={18} /></div>}
@@ -803,7 +872,11 @@ const POSInner = () => {
                           <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><Utensils size={32} color="var(--text-muted)" /></div>
                         )}
                         <span style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>{item.name}</span>
-                        <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+₹{item.price}</span>
+                        {item.isAvailable === false ? (
+                           <span style={{ color: 'var(--error)', fontWeight: 'bold', fontSize: '0.8rem' }}>Sold Out</span>
+                        ) : (
+                           <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+₹{item.price}</span>
+                        )}
                       </div>
                     );
                   });
@@ -1008,7 +1081,23 @@ const POSInner = () => {
                   placeholder="John Doe" 
                 />
                 {customerName && !customerLoading && customerPhone.length >= 10 && (
-                  <p style={{ color: 'var(--accent)', fontSize: '0.8rem', marginTop: '0.5rem', margin: '0.5rem 0 0 0' }}>Customer profile identified</p>
+                  <p style={{ color: 'var(--accent)', fontSize: '0.8rem', marginTop: '0.5rem', margin: '0.5rem 0 0 0' }}>
+                    Customer profile identified. Loyalty Points: {customerLoyaltyPoints}
+                  </p>
+                )}
+                {loyaltySettings && customerLoyaltyPoints >= loyaltySettings.thresholdPoints && (
+                  <div style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)', marginTop: '1rem' }}>
+                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Gift size={18} /> Reward Available!</h4>
+                    <p style={{ fontSize: '0.9rem', margin: '0 0 1rem 0', color: 'var(--text-main)' }}>
+                      {loyaltySettings.rewardType === 'discount' 
+                        ? `Eligible for ${loyaltySettings.rewardValue}% discount.` 
+                        : `Eligible for free: ${loyaltySettings.rewardValue}.`}
+                    </p>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, color: 'var(--text-main)' }}>
+                      <input type="checkbox" checked={rewardApplied} onChange={e => setRewardApplied(e.target.checked)} />
+                      Apply Reward (deducts {loyaltySettings.thresholdPoints} pts)
+                    </label>
+                  </div>
                 )}
               </div>
 

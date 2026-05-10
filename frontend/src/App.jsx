@@ -10,6 +10,7 @@ import ActiveOrders from './pages/ActiveOrders';
 import PaymentSuccess from './pages/PaymentSuccess';
 import AuthPage from './pages/AuthPage';
 import AccessRequests from './pages/AccessRequests';
+import Customers from './pages/Customers';
 import Sidebar from './components/Sidebar';
 import { setupMockApi, teardownMockApi } from './mockApi';
 class ErrorBoundary extends React.Component {
@@ -69,6 +70,7 @@ function AppInner() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/ledger" element={<OrderLedger />} />
             <Route path="/orders" element={<ActiveOrders />} />
+            <Route path="/customers" element={<Customers />} />
             <Route path="/access-requests" element={<AccessRequests />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
           </Routes>

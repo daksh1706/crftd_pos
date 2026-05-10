@@ -108,6 +108,37 @@ export const setupMockApi = () => {
           };
           orders.push(newOrder);
           setStorage('demo_orders', orders);
+
+          // Loyalty Points Logic
+          if (body.customerPhone) {
+            let customers = getStorage('demo_customers');
+            let customerIndex = customers.findIndex(c => c.phone === body.customerPhone);
+            let customer = customerIndex >= 0 ? customers[customerIndex] : null;
+
+            if (!customer) {
+              customer = {
+                id: generateId(),
+                _id: generateId(),
+                phone: body.customerPhone,
+                name: body.customerName || 'Walk-in',
+                loyaltyPoints: 0
+              };
+              customers.push(customer);
+              customerIndex = customers.length - 1;
+            }
+
+            const settings = getStorage('demo_loyalty_settings') || { pointsPerOrder: 1, thresholdPoints: 10 };
+            
+            if (body.rewardApplied) {
+              customer.loyaltyPoints = Math.max(0, (customer.loyaltyPoints || 0) - (settings.thresholdPoints || 10));
+            }
+            
+            customer.loyaltyPoints = (customer.loyaltyPoints || 0) + (settings.pointsPerOrder || 1);
+            
+            customers[customerIndex] = customer;
+            setStorage('demo_customers', customers);
+          }
+
           return mockResponse(newOrder, 201);
         }
         if (method === 'PUT') {
@@ -122,6 +153,14 @@ export const setupMockApi = () => {
       if (url.includes('/api/customers')) {
         let customers = getStorage('demo_customers');
         if (method === 'GET') {
+          // Check for specific customer by phone
+          const parts = url.split('/');
+          const possiblePhone = parts[parts.length - 1];
+          if (possiblePhone && possiblePhone !== 'customers' && possiblePhone.length >= 10) {
+            const customer = customers.find(c => c.phone === possiblePhone);
+            if (customer) return mockResponse(customer);
+            return mockResponse({ error: 'Not found' }, 404);
+          }
           return mockResponse(customers);
         }
         if (method === 'POST') {
@@ -129,6 +168,23 @@ export const setupMockApi = () => {
           customers.push(newCust);
           setStorage('demo_customers', customers);
           return mockResponse(newCust, 201);
+        }
+      }
+
+      // ---- /api/loyalty-settings ----
+      if (url.includes('/api/loyalty-settings')) {
+        if (method === 'GET') {
+          const settings = getStorage('demo_loyalty_settings') || {
+            pointsPerOrder: 1,
+            thresholdPoints: 10,
+            rewardType: 'discount',
+            rewardValue: 50
+          };
+          return mockResponse(settings);
+        }
+        if (method === 'POST') {
+          setStorage('demo_loyalty_settings', body);
+          return mockResponse(body);
         }
       }
 

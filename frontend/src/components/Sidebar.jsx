@@ -10,7 +10,8 @@ import {
   Bell,
   LogOut,
   Plus,
-  Shield
+  Shield,
+  Users
 } from 'lucide-react';
 
 const Sidebar = ({ setAuth, role }) => {
@@ -50,6 +51,7 @@ const Sidebar = ({ setAuth, role }) => {
           <NavItem to="/orders" icon={<Bell size={20} />} label="Active Orders" />
           <NavItem to="/inventory" icon={<Package size={20} />} label="Inventory" />
           <NavItem to="/menu" icon={<MenuSquare size={20} />} label="Menu & Recipes" />
+          <NavItem to="/customers" icon={<Users size={20} />} label="Customers" />
           <NavItem to="/reports" icon={<BarChart3 size={20} />} label="Analytics" />
           <NavItem to="/ledger" icon={<BookOpen size={20} />} label="Order Ledger" />
           <NavItem to="/settings" icon={<SettingsIcon size={20} />} label="Settings" />
