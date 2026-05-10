@@ -73,10 +73,6 @@ A modern, production-ready, dark-themed Point of Sale system built with the MERN
 ## Authentication Setup
 By default, the system restricts access. The following accounts are pre-approved and injected into the system:
 
-**Admin Account:**
-- **Email:** `dakshmaru10@gmail.com`
-- **Password:** `Daksh@2006`
-
 **Test/Cashier Account:**
 - **Email:** `test@gmail.com`
 - **Password:** `user1234`
