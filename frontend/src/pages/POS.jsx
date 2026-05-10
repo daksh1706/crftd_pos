@@ -281,8 +281,8 @@ const POSInner = () => {
     y += 6;
     
     doc.setFontSize(14);
-    const orderNo = completedOrder.orderNumber || completedOrder.invoiceNumber.split('-')[1];
-    doc.text(`         ORDER #${orderNo}`, marginLeft, y);
+    const orderNo = completedOrder.orderNumber || completedOrder.invoiceNumber.split('-')[1] || 'N/A';
+    doc.text(`      Order No: ${orderNo}`, marginLeft, y);
     doc.setFontSize(8);
     doc.setFont('courier', 'normal');
     y += 6;
@@ -353,6 +353,8 @@ const POSInner = () => {
     }).replace(',', '');
 
     doc.text(`Bill No   : ${completedOrder.invoiceNumber}`, marginLeft, y);
+    y += 4;
+    doc.text(`Order No  : ${orderNo}`, marginLeft, y);
     y += 4;
     doc.text(`Date      : ${dateStr}`, marginLeft, y);
     y += 4;
