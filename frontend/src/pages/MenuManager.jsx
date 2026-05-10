@@ -7,6 +7,7 @@ const MenuManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedDetails, setExpandedDetails] = useState(null); 
   const [editingItem, setEditingItem] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
   const [activeTab, setActiveTab] = useState('Signature');
 
   const initialFormState = {
@@ -78,13 +79,12 @@ const MenuManager = () => {
   };
 
   const deleteItem = async (id) => {
-    if (window.confirm("Are you sure you want to delete this dish?")) {
-      try {
-        await fetch(`/api/menu/${id}`, { method: 'DELETE' });
-        fetchMenu();
-      } catch (err) {
-        console.error("Failed to delete", err);
-      }
+    try {
+      await fetch(`/api/menu/${id}`, { method: 'DELETE' });
+      fetchMenu();
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Failed to delete", err);
     }
   };
 
@@ -223,7 +223,7 @@ const MenuManager = () => {
                 <button onClick={() => openModal(item)} style={{ background: '#ffffff', border: '1px solid var(--border)', color: 'var(--text-main)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }} className="hover-brighten">
                   <Edit2 size={14} />
                 </button>
-                <button onClick={() => deleteItem(item._id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }}>
+                <button onClick={() => setDeleteConfirm({ id: item._id, name: item.name })} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'var(--transition)' }}>
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -452,6 +452,37 @@ const MenuManager = () => {
                 {editingItem ? 'Save Changes' : 'Save Dish to Menu'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div className="glass animate-slide-up" style={{ width: '420px', borderRadius: 'var(--radius-lg)', padding: '2.5rem', background: '#ffffff', textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
+              <Trash2 size={28} color="var(--error)" />
+            </div>
+            <h2 style={{ margin: '0 0 0.75rem 0', fontSize: '1.3rem' }}>Delete Dish?</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.5' }}>
+              Are you sure you want to delete <strong>{deleteConfirm.name}</strong>? This will remove it from the menu.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.9rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteItem(deleteConfirm.id)}
+                className="btn"
+                style={{ flex: 1, padding: '0.9rem', background: 'var(--error)', color: '#fff' }}
+              >
+                <Trash2 size={16} /> Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

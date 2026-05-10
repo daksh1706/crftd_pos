@@ -262,8 +262,8 @@ input::placeholder, textarea::placeholder {
 
 .cart-footer {
   height: 35%;
-  min-height: 260px;
-  padding: 1.25rem 1.5rem;
+  min-height: 250px;
+  padding: 1rem 1.25rem;
   border-top: 2px solid var(--border);
   background-color: #ffffff;
   display: flex;
@@ -275,17 +275,18 @@ input::placeholder, textarea::placeholder {
 .summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.3rem;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
 }
 
 .summary-row.total {
   color: var(--text-main);
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
   border-top: 1px dashed var(--border);
   margin-bottom: 0;
 }

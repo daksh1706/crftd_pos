@@ -7,6 +7,7 @@ const InventoryDashboard = () => {
   const [isPrepareModalOpen, setIsPrepareModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [preparingItem, setPreparingItem] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
   
   const [formData, setFormData] = useState({
     name: '',
@@ -120,10 +121,9 @@ const InventoryDashboard = () => {
   };
 
   const deleteItem = async (id) => {
-    if(window.confirm('Are you sure you want to delete this ingredient?')) {
-      await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
-      fetchInventory();
-    }
+    await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+    fetchInventory();
+    setDeleteConfirm(null);
   };
 
   return (
@@ -188,7 +188,7 @@ const InventoryDashboard = () => {
                     <button onClick={() => openModal(item)} style={{ background: 'transparent', border: 'none', color: 'var(--info)', cursor: 'pointer', padding: '0.5rem' }}>
                       <Edit2 size={18} />
                     </button>
-                    <button onClick={() => deleteItem(item._id)} style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.5rem' }}>
+                    <button onClick={() => setDeleteConfirm({ id: item._id, name: item.name })} style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.5rem' }}>
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -308,6 +308,37 @@ const InventoryDashboard = () => {
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }}>Confirm & Prepare</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div className="glass animate-slide-up" style={{ width: '420px', borderRadius: 'var(--radius-lg)', padding: '2.5rem', background: '#ffffff', textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
+              <Trash2 size={28} color="var(--error)" />
+            </div>
+            <h2 style={{ margin: '0 0 0.75rem 0', fontSize: '1.3rem' }}>Delete Ingredient?</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.5' }}>
+              Are you sure you want to delete <strong>{deleteConfirm.name}</strong>? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.9rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteItem(deleteConfirm.id)}
+                className="btn"
+                style={{ flex: 1, padding: '0.9rem', background: 'var(--error)', color: '#fff' }}
+              >
+                <Trash2 size={16} /> Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
