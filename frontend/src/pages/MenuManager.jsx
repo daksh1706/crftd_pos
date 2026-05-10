@@ -318,7 +318,8 @@ const MenuManager = () => {
                       <option>Waffles</option>
                       <option>Pancakes</option>
                       <option>Coffee</option>
-                      <option>Shakes and Smoothies</option>
+                      <option>Shakes</option>
+                      <option>Smoothies</option>
                     </select>
                   </div>
                 )}

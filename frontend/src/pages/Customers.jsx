@@ -169,7 +169,7 @@ const Customers = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loyalty Points</div>
-                      <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{customer.loyaltyPoints || 0} pts</div>
+                      <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{customer.loyaltyPoints || customer.loyalty_points || 0} pts</div>
                     </div>
                     <ChevronRight size={20} color="var(--text-muted)" />
                   </div>
@@ -196,7 +196,7 @@ const Customers = () => {
                 </div>
                 <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>Loyalty Points</div>
-                  <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{selectedCustomer.loyaltyPoints || 0}</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{selectedCustomer.loyaltyPoints || selectedCustomer.loyalty_points || 0}</div>
                 </div>
               </div>
             </div>

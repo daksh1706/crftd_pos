@@ -118,7 +118,7 @@ const POSInner = () => {
         if (res.ok) {
           const data = await res.json();
           setCustomerName(data.name);
-          setCustomerLoyaltyPoints(data.loyaltyPoints || 0);
+          setCustomerLoyaltyPoints(data.loyaltyPoints || data.loyalty_points || 0);
         } else {
           setCustomerLoyaltyPoints(0);
         }
@@ -423,7 +423,7 @@ const POSInner = () => {
 
       if (item.customizations && item.customizations.length > 0) {
         doc.setFontSize(7);
-        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const customText = `  + ${item.customizations.map(c => `${c.name} (Rs.${c.price})`).join(', ')}`;
         const splitText = doc.splitTextToSize(customText, 40); // wrap within 40 chars
         splitText.forEach(line => {
           doc.text(line, marginLeft, y);
