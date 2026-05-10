@@ -753,7 +753,7 @@ const POSInner = () => {
             <span style={{ color: 'var(--accent)' }}>₹{total.toFixed(2)}</span>
           </div>
 
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             {['Cash', 'Card', 'UPI'].map(method => (
               <button 
                 key={method}
@@ -777,7 +777,7 @@ const POSInner = () => {
 
           <button 
             className="btn btn-primary" 
-            style={{ width: '100%', padding: '1.2rem', fontSize: '1.1rem' }}
+            style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
             onClick={handleCheckoutInit}
             disabled={cart.length === 0}
           >

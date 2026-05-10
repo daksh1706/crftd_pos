@@ -261,26 +261,33 @@ input::placeholder, textarea::placeholder {
 }
 
 .cart-footer {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid var(--border);
+  height: 35%;
+  min-height: 260px;
+  padding: 1.25rem 1.5rem;
+  border-top: 2px solid var(--border);
   background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: var(--text-muted);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .summary-row.total {
   color: var(--text-main);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px dashed var(--border);
+  margin-bottom: 0;
 }
 
 /* Tables */
