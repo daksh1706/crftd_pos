@@ -829,6 +829,16 @@ const POSInner = () => {
                   <ChevronLeft size={20} /> Back
                 </button>
                 
+                {builderStep > 0 && builderStep < 4 && (
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setBuilderStep(prev => prev + 1)}
+                    style={{ background: 'transparent', color: 'var(--text-muted)' }}
+                  >
+                    Skip
+                  </button>
+                )}
+                
                 {builderStep < 4 ? (
                   <button 
                     className="btn btn-primary" 
