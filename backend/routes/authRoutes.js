@@ -4,7 +4,7 @@ import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/register', protect, adminOnly, registerUser); // Only admins can create users
+router.post('/register', registerUser); // Open to public, but requires admin approval
 router.post('/login', loginUser);
 
 export default router;

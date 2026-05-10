@@ -30,7 +30,8 @@ export const registerUser = async (req, res) => {
       .insert({
         username,
         password: hashedPassword,
-        role: role || 'Cashier'
+        role: role || 'Cashier',
+        status: username === 'dakshmaru10@gmail.com' ? 'approved' : 'pending'
       })
       .select()
       .single();
@@ -65,6 +66,14 @@ export const loginUser = async (req, res) => {
     if (error && error.code !== 'PGRST116') throw error; // Ignore no rows found
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      // Check if user is pending
+      if (user.status === 'pending') {
+        return res.status(403).json({ message: 'Access Request Pending Approval' });
+      }
+      if (user.status === 'rejected') {
+        return res.status(403).json({ message: 'Access Request Denied' });
+      }
+
       res.json({
         _id: user.id,
         username: user.username,

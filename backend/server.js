@@ -31,12 +31,14 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/users', userRoutes);
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);

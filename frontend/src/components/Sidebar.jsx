@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Package, 
@@ -9,10 +9,18 @@ import {
   BookOpen,
   Bell,
   LogOut,
-  Plus
+  Plus,
+  Shield
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ setAuth, role }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    if (setAuth) setAuth(null);
+    navigate('/');
+  };
   return (
     <>
       <div className="desktop-sidebar" style={{
@@ -44,11 +52,16 @@ const Sidebar = () => {
           <NavItem to="/menu" icon={<MenuSquare size={20} />} label="Menu & Recipes" />
           <NavItem to="/reports" icon={<BarChart3 size={20} />} label="Analytics" />
           <NavItem to="/ledger" icon={<BookOpen size={20} />} label="Order Ledger" />
+          
+          {role === 'Admin' && (
+            <NavItem to="/access-requests" icon={<Shield size={20} />} label="Access Requests" />
+          )}
+
           <NavItem to="/settings" icon={<SettingsIcon size={20} />} label="Settings" />
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-          <button style={{ 
+          <button onClick={handleLogout} style={{ 
             display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', 
             color: 'var(--text-muted)', background: 'transparent', border: 'none', 
             cursor: 'pointer', width: '100%', borderRadius: 'var(--radius-md)', 

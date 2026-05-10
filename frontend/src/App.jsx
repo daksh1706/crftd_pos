@@ -8,6 +8,8 @@ import Settings from './pages/Settings';
 import OrderLedger from './pages/OrderLedger';
 import ActiveOrders from './pages/ActiveOrders';
 import PaymentSuccess from './pages/PaymentSuccess';
+import AuthPage from './pages/AuthPage';
+import AccessRequests from './pages/AccessRequests';
 import Sidebar from './components/Sidebar';
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -29,10 +31,25 @@ class ErrorBoundary extends React.Component {
 }
 
 function AppInner() {
+  const [auth, setAuth] = React.useState(() => {
+    const saved = localStorage.getItem('userInfo');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  if (!auth) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<AuthPage setAuth={setAuth} />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div className="app-container">
-        <Sidebar />
+        <Sidebar setAuth={setAuth} role={auth.role} />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Navigate to="/pos" replace />} />
@@ -43,6 +60,7 @@ function AppInner() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/ledger" element={<OrderLedger />} />
             <Route path="/orders" element={<ActiveOrders />} />
+            <Route path="/access-requests" element={<AccessRequests />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
           </Routes>
         </main>
