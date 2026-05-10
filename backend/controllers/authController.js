@@ -68,7 +68,7 @@ export const loginUser = async (req, res) => {
     if (user && (await bcrypt.compare(password, user.password))) {
       // Check if user is pending
       if (user.status === 'pending') {
-        return res.status(403).json({ message: 'Access Request Pending Approval' });
+        return res.status(403).json({ message: 'The admin will confirm your authentication and you will be notified.' });
       }
       if (user.status === 'rejected') {
         return res.status(403).json({ message: 'Access Request Denied' });

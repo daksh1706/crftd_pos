@@ -36,7 +36,7 @@ const AuthPage = ({ setAuth }) => {
         setAuth(data);
         navigate('/pos');
       } else {
-        setSuccessMsg('Request submitted! Please wait for admin approval.');
+        setSuccessMsg('The admin will confirm your authentication and you will be notified.');
         setIsLogin(true);
       }
     } catch (err) {
