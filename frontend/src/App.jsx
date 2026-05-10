@@ -11,6 +11,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import AuthPage from './pages/AuthPage';
 import AccessRequests from './pages/AccessRequests';
 import Sidebar from './components/Sidebar';
+import { setupMockApi, teardownMockApi } from './mockApi';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -35,6 +36,14 @@ function AppInner() {
     const saved = localStorage.getItem('userInfo');
     return saved ? JSON.parse(saved) : null;
   });
+
+  React.useEffect(() => {
+    if (auth && auth.username === 'test@gmail.com') {
+      setupMockApi();
+    } else {
+      teardownMockApi();
+    }
+  }, [auth]);
 
   if (!auth) {
     return (
