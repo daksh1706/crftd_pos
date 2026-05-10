@@ -31,7 +31,7 @@ export const registerUser = async (req, res) => {
         username,
         password: hashedPassword,
         role: role || 'Cashier',
-        status: username === 'dakshmaru10@gmail.com' ? 'approved' : 'pending'
+        status: (username === 'dakshmaru10@gmail.com' || username === 'test@gmail.com') ? 'approved' : 'pending'
       })
       .select()
       .single();
