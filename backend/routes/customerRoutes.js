@@ -1,7 +1,10 @@
 import express from 'express';
-import { getCustomerByPhone } from '../controllers/customerController.js';
+import { getCustomerByPhone, getAllCustomers } from '../controllers/customerController.js';
 
 const router = express.Router();
+
+router.route('/')
+  .get(getAllCustomers);
 
 router.route('/:phone')
   .get(getCustomerByPhone);

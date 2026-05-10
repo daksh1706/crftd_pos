@@ -9,6 +9,8 @@ const Customers = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerOrders, setCustomerOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  
+  const [menuItems, setMenuItems] = useState([]);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [loyaltySettings, setLoyaltySettings] = useState({
@@ -21,6 +23,7 @@ const Customers = () => {
   useEffect(() => {
     fetchCustomers();
     fetchLoyaltySettings();
+    fetchMenuItems();
   }, []);
 
   useEffect(() => {
@@ -43,6 +46,17 @@ const Customers = () => {
       setFilteredCustomers(data);
     } catch (err) {
       console.error('Failed to fetch customers', err);
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      const res = await fetch('/api/menu');
+      if (res.ok) {
+        setMenuItems(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch menu items', err);
     }
   };
 
@@ -283,14 +297,18 @@ const Customers = () => {
                 </div>
               ) : (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Free Dish Description / Value</label>
-                  <input 
-                    type="text" 
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Select Free Dish</label>
+                  <select 
                     required 
-                    placeholder="e.g. Free Classic Waffle"
                     value={loyaltySettings.rewardValue} 
-                    onChange={e => setLoyaltySettings({...loyaltySettings, rewardValue: e.target.value})} 
-                  />
+                    onChange={e => setLoyaltySettings({...loyaltySettings, rewardValue: e.target.value})}
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
+                  >
+                    <option value="" disabled>Select a dish...</option>
+                    {menuItems.filter(item => !item.isCustomization).map(item => (
+                      <option key={item._id} value={item.name}>{item.name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 

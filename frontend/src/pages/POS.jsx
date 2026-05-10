@@ -350,7 +350,7 @@ const POSInner = () => {
       y += 4;
       if (item.customizations && item.customizations.length > 0) {
         doc.setFontSize(7);
-        const customText = `  + ${item.customizations.map(c => c.name).join(', ')}`;
+        const customText = `  + ${item.customizations.map(c => `${c.name} (Rs.${c.price})`).join(', ')}`;
         const splitText = doc.splitTextToSize(customText, 70);
         splitText.forEach(line => {
           doc.text(line, marginLeft, y);
@@ -818,7 +818,7 @@ const POSInner = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
                 {(() => {
                   let options = [];
-                  if (builderStep === 0) options = menuItems.filter(i => !i.isCustomization);
+                  if (builderStep === 0) options = menuItems.filter(i => !i.isCustomization && (i.category === 'Waffles' || i.category === 'Pancakes'));
                   if (builderStep === 1) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Flavour');
                   if (builderStep === 2) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Topping');
                   if (builderStep === 3) options = menuItems.filter(i => i.isCustomization && i.customizationType === 'Filling');

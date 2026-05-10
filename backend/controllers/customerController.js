@@ -1,5 +1,19 @@
 import { supabase } from '../config/supabase.js';
 
+export const getAllCustomers = async (req, res) => {
+  try {
+    const { data: customers, error } = await supabase
+      .from('customers')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getCustomerByPhone = async (req, res) => {
   try {
     const { data: customer, error } = await supabase

@@ -23,7 +23,7 @@ const generateInvoiceAndOrderNumber = async () => {
 };
 
 export const createOrder = async (req, res) => {
-  const { items, paymentMethod, discountAmount = 0, customerPhone, customerName, cashGiven, changeDue, isCheckoutSession } = req.body;
+  const { items, paymentMethod, discountAmount = 0, customerPhone, customerName, cashGiven, changeDue, isCheckoutSession, rewardApplied } = req.body;
   
   if (!items || items.length === 0) {
     return res.status(400).json({ message: 'No order items' });
@@ -108,6 +108,16 @@ export const createOrder = async (req, res) => {
     let customerId = null;
     let customerDetails = null;
     if (customerPhone && customerName) {
+      // Fetch loyalty settings first
+      const { data: loyaltySettings } = await supabase
+        .from('loyalty_settings')
+        .select('*')
+        .limit(1)
+        .single();
+        
+      const pointsToGrant = loyaltySettings?.points_per_order || 1;
+      const threshold = loyaltySettings?.threshold_points || 10;
+
       const { data: existingCustomer } = await supabase
         .from('customers')
         .select('*')
@@ -115,12 +125,19 @@ export const createOrder = async (req, res) => {
         .single();
 
       if (existingCustomer) {
+        let newLoyaltyPoints = (existingCustomer.loyalty_points || 0);
+        if (rewardApplied) {
+          newLoyaltyPoints = Math.max(0, newLoyaltyPoints - threshold);
+        }
+        newLoyaltyPoints += pointsToGrant;
+
         const { data: updatedCustomer } = await supabase
           .from('customers')
           .update({
             name: customerName,
             total_orders: existingCustomer.total_orders + 1,
-            total_spent: existingCustomer.total_spent + totalAmount
+            total_spent: existingCustomer.total_spent + totalAmount,
+            loyalty_points: newLoyaltyPoints
           })
           .eq('id', existingCustomer.id)
           .select()
@@ -134,7 +151,8 @@ export const createOrder = async (req, res) => {
             phone: customerPhone,
             name: customerName,
             total_orders: 1,
-            total_spent: totalAmount
+            total_spent: totalAmount,
+            loyalty_points: pointsToGrant
           })
           .select()
           .single();
